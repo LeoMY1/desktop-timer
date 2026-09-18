@@ -34,6 +34,32 @@ extension AppDelegate {
             check("nonactivating_panel_flags", timerPanel.styleMask.contains(.nonactivatingPanel) && notePanel.styleMask.contains(.nonactivatingPanel))
             check("all_spaces_and_full_screen_flags", timerPanel.collectionBehavior.contains(.canJoinAllSpaces) && timerPanel.collectionBehavior.contains(.fullScreenAuxiliary))
             check("floating_and_no_hide_on_deactivate", timerPanel.level == .floating && !timerPanel.hidesOnDeactivate)
+            func findDrag(_ view: NSView) -> DragView? {
+                if let drag = view as? DragView { return drag }
+                return view.subviews.compactMap { findDrag($0) }.first
+            }
+            // Hit-test the actual hosted hierarchy, including SwiftUI's button bounds.
+            for phase in DemoPhase.allCases {
+                model.setFixture(phase)
+                settle()
+                let root = timerPanel.contentView!
+                let drag = findDrag(root)
+                let edges = [NSPoint(x: 2, y: 88), NSPoint(x: 286, y: 88), NSPoint(x: 144, y: 2), NSPoint(x: 144, y: 174)]
+                let blanks = [NSPoint(x: 144, y: 76), NSPoint(x: 144, y: 156), NSPoint(x: 7, y: 130)]
+                func hit(_ point: NSPoint) -> NSView? {
+                    guard let drag = drag else { return nil }
+                    return root.hitTest(drag.convert(point, to: root.superview))
+                }
+                check("\(phase.rawValue)_all_four_edges_drag", drag != nil && edges.allSatisfy { hit($0) === drag })
+                check("\(phase.rawValue)_digits_footer_and_padding_drag", drag != nil && blanks.allSatisfy { hit($0) === drag })
+                let controls = drag?.excludedRects ?? []
+                let expected = phase == .running || phase == .paused ? 4 : 3
+                check("\(phase.rawValue)_buttons_excluded_from_drag", controls.count == expected && controls.allSatisfy {
+                    let target = hit(NSPoint(x: $0.midX, y: $0.midY))
+                    return target != nil && target !== drag
+                })
+            }
+            model.setFixture(.idle)
             moveNearTop()
             let original = timerPanel.frame
             let frontBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier

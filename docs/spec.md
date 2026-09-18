@@ -75,6 +75,7 @@ P3 验证核心计时、归日、保存和恢复；P4 才实现完整整小时�
 ## 8. P2 实际实现与边界
 用户明确授权 P2 后，建立 `Sources/StudyTimerPrototype`、独立 `WindowGeometry` 模块、布局检查与打包脚本。本阶段没有 TimerEngine、TimeSource、LedgerStore 或真实 ReminderCoordinator，也没有 SQLite 和学习记录持久化。
 
+- v2 主窗四周边缘、数字和非交互空白处均为拖动区；依据按钮实际布局排除交互控件。仅实际位移取消卡片关闭复位。
 - 主窗 288×176 pt；备注卡片 288×244 pt，固定在主窗上方，间距 3 pt；屏幕可见区域保留 8 pt 边距。历史窗口初始 850×620 pt。
 - 主窗为非激活 NSPanel，不能成为键盘窗口。备注 panel 展示只调用 orderFront；原生 NSTextView 在用户主动点击时请求键盘焦点。
 - 顶部空间不足保存原坐标、临时下移，收起恢复；实际拖动才取消恢复，仅点击拖动区域不取消。拖动结束校正到屏幕内。屏幕变化时恢复可见位置。

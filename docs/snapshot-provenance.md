@@ -1,8 +1,8 @@
-# P2-v1 阶段快照
+# P2-v2 阶段快照
 
 从已有交付快照事后补建，提交时间为实际导入时间，不代表原开发提交。
 
-来源：StudyTimer-P2-source-v1.zip
-原始交付包 SHA-256：`bc979a5cb43a5a0ad6e22b1e09b6fe1d2574025a035b7ca8e0d8383000a4e1ff`
+来源：StudyTimer-P2-source-v2.zip
+原始交付包 SHA-256：`90bc4b8a8a6501e2a65cd1afb0173849903df8b3b8d7e2d5ba1a1c1028d9e4f6`
 
 公开导入仅保留源码、文档、设计和精选测试证据；去除个人路径及真实数据细节。历史报告是当时记录，未在本次重新运行。

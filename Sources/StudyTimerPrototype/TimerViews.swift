@@ -1,5 +1,18 @@
 import SwiftUI
 
+private struct TimerControlBounds: PreferenceKey {
+    static var defaultValue: [Anchor<CGRect>] = []
+    static func reduce(value: inout [Anchor<CGRect>], nextValue: () -> [Anchor<CGRect>]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+private extension View {
+    func timerControl() -> some View {
+        anchorPreference(key: TimerControlBounds.self, value: .bounds) { [$0] }
+    }
+}
+
 struct TimerView: View {
     @ObservedObject var model: PrototypeModel
     var primary: () -> Void
@@ -13,22 +26,21 @@ struct TimerView: View {
         VStack(spacing: 7) {
             HStack(spacing: 7) {
                 Text("今日学习").font(.system(size: 13, weight: .semibold))
-                    .overlay(DragRegion(onStart: beginDrag, onEnd: endDrag))
                 Spacer(minLength: 2)
                 Circle().fill(model.phase == .running ? PrototypeTheme.accent : model.phase == .paused ? .orange.opacity(0.7) : .gray.opacity(0.65)).frame(width: 6, height: 6)
                 Text(model.phase.title).font(.system(size: 11)).foregroundColor(.secondary)
-                    .overlay(DragRegion(onStart: beginDrag, onEnd: endDrag))
                 Button(action: history) { Image(systemName: "text.badge.plus").frame(width: 20, height: 20) }
                     .buttonStyle(.plain).foregroundColor(.secondary).help("查看学习记录（演示数据）").accessibilityLabel("查看学习记录")
+                    .timerControl()
                 Button(action: showMenu) { Image(systemName: "ellipsis").frame(width: 16, height: 20) }
                     .buttonStyle(.plain).foregroundColor(.secondary).help("原型演示与设置").accessibilityLabel("原型演示菜单")
+                    .timerControl()
             }
             ZStack {
                 Text(model.displayTime)
                     .font(.system(size: 51, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(PrototypeTheme.primaryInk)
                     .frame(maxWidth: .infinity, minHeight: 56)
-                    .overlay(DragRegion(onStart: beginDrag, onEnd: endDrag))
                 if model.celebration {
                     HStack {
                         Image(systemName: "sparkles")
@@ -45,10 +57,11 @@ struct TimerView: View {
                 Button(action: primary) {
                     Label(model.phase == .running ? "暂停" : model.phase == .paused ? "继续学习" : "开始学习",
                           systemImage: model.phase == .running ? "pause.fill" : "play.fill")
-                }.buttonStyle(DemoButtonStyle(prominent: true))
+                }.buttonStyle(DemoButtonStyle(prominent: true)).timerControl()
                 if model.phase == .running || model.phase == .paused {
                     Button(action: stop) { Label("停止学习", systemImage: "stop.fill") }
                         .buttonStyle(DemoButtonStyle())
+                        .timerControl()
                 }
             }
             Text(model.delayedPromptPending ? "8秒后演示弹窗 · 请切回其他应用" : model.feedback.isEmpty ? "P2 交互原型 · 示例时间，不计时" : model.feedback)
@@ -62,6 +75,13 @@ struct TimerView: View {
         .background(PrototypeTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(PrototypeTheme.border, lineWidth: 1))
+        .overlayPreferenceValue(TimerControlBounds.self) { anchors in
+            GeometryReader { geometry in
+                DragRegion(onStart: beginDrag, onEnd: endDrag,
+                           excludedRects: anchors.map { geometry[$0] })
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+            }
+        }
     }
 }
 
@@ -120,4 +140,3 @@ struct NoteCardView: View {
         .overlay(PopupOutline().stroke(PrototypeTheme.border, lineWidth: 1))
     }
 }
-

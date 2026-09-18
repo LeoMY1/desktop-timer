@@ -1,9 +1,9 @@
 # 桌面悬浮计时应用
 
-面向日常学习的本地 Mac 计时器。当前已交付 **P2 原生交互原型 v1，等待用户测试验收**。用户于 2026-09-18 明确要求“按照文档，完成P2开发”；P3 尚未获准。
+面向日常学习的本地 Mac 计时器。当前已交付 **P2 原生交互原型 v2，等待用户测试验收**。用户于 2026-09-18 明确要求“按照文档，完成P2开发”；P3 尚未获准。
 
 ## 运行与验收
-双击 `outputs/P2-v1/StudyTimer-P2.app`。仅支持本次构建的 Apple Silicon Mac。
+双击 `outputs/P2-v2/StudyTimer-P2.app`。仅支持本次构建的 Apple Silicon Mac。
 
 这是窗口交互原型：时间、日期和历史均为固定演示数据，不会真实计时；文字只保留在本次运行。仅窗口位置保存到独立 P2 偏好设置，不创建学习数据库。
 
@@ -17,7 +17,7 @@
 ```sh
 bash scripts/build.sh release
 bash scripts/test.sh
-./outputs/P2-v1/StudyTimer-P2.app/Contents/MacOS/StudyTimerPrototype --self-check "$PWD/work/p2-evidence/local"
+./outputs/P2-v2/StudyTimer-P2.app/Contents/MacOS/StudyTimerPrototype --self-check "$PWD/work/p2-evidence/local"
 ```
 
 构建目标为 arm64 / macOS 13，无第三方依赖。`Package.swift` 保留工程结构；当前 CLT 环境的 `swift build` 无法查询 SDK PlatformPath，因此本机交付采用 `xcrun swiftc`。测试是独立 Swift 检查程序，不依赖 XCTest。

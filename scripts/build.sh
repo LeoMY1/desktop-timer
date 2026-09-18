@@ -8,7 +8,7 @@ if [ "$configuration" != "debug" ] && [ "$configuration" != "release" ]; then
   exit 2
 fi
 build_root="$project_root/work/native-build/$configuration"
-bundle="$project_root/outputs/P2-v1/StudyTimer-P2.app"
+bundle="$project_root/outputs/P2-v2/StudyTimer-P2.app"
 mkdir -p "$build_root" "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 sdk_path="$(xcrun --show-sdk-path)"
 optimization="-O"

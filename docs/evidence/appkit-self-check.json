@@ -22,6 +22,54 @@
       "passed": true
     },
     {
+      "name": "idle_all_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "idle_digits_footer_and_padding_drag",
+      "passed": true
+    },
+    {
+      "name": "idle_buttons_excluded_from_drag",
+      "passed": true
+    },
+    {
+      "name": "running_all_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "running_digits_footer_and_padding_drag",
+      "passed": true
+    },
+    {
+      "name": "running_buttons_excluded_from_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_all_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_digits_footer_and_padding_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_buttons_excluded_from_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_all_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_digits_footer_and_padding_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_buttons_excluded_from_drag",
+      "passed": true
+    },
+    {
       "name": "card_does_not_take_key_on_show",
       "passed": true
     },
