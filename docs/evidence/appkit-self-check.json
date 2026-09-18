@@ -1,0 +1,105 @@
+{
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "initial_fixture_idle_00_00",
+      "passed": true
+    },
+    {
+      "name": "timer_cannot_become_key",
+      "passed": true
+    },
+    {
+      "name": "nonactivating_panel_flags",
+      "passed": true
+    },
+    {
+      "name": "all_spaces_and_full_screen_flags",
+      "passed": true
+    },
+    {
+      "name": "floating_and_no_hide_on_deactivate",
+      "passed": true
+    },
+    {
+      "name": "card_does_not_take_key_on_show",
+      "passed": true
+    },
+    {
+      "name": "front_application_unchanged_on_card_show",
+      "passed": true
+    },
+    {
+      "name": "card_above_timer",
+      "passed": true
+    },
+    {
+      "name": "top_edge_temporarily_shifts_timer",
+      "passed": true
+    },
+    {
+      "name": "card_inside_visible_screen",
+      "passed": true
+    },
+    {
+      "name": "click_without_drag_preserves_restore",
+      "passed": true
+    },
+    {
+      "name": "close_restores_exact_original_frame",
+      "passed": true
+    },
+    {
+      "name": "drag_cancels_original_restore",
+      "passed": true
+    },
+    {
+      "name": "draft_survives_card_close_in_memory",
+      "passed": true
+    },
+    {
+      "name": "note_input_has_usable_bounds",
+      "passed": true
+    },
+    {
+      "name": "note_accepts_explicit_text_focus",
+      "passed": true
+    },
+    {
+      "name": "native_chinese_insertion_updates_draft",
+      "passed": true
+    },
+    {
+      "name": "native_selection_replacement_updates_draft",
+      "passed": true
+    },
+    {
+      "name": "hide_orders_window_out",
+      "passed": true
+    },
+    {
+      "name": "show_orders_window_in",
+      "passed": true
+    },
+    {
+      "name": "pause_button_changes_fixture",
+      "passed": true
+    },
+    {
+      "name": "continue_button_changes_fixture",
+      "passed": true
+    },
+    {
+      "name": "stop_opens_tail_fixture",
+      "passed": true
+    }
+  ],
+  "stage": "P2",
+  "notCovered": [
+    "Real full-screen browser",
+    "Real desktop switching",
+    "Real pointer dragging",
+    "Chinese IME composition",
+    "Real elapsed-time behavior (outside P2)"
+  ]
+}
