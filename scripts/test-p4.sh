@@ -9,4 +9,4 @@ args=(-target arm64-apple-macosx13.0 -sdk "$sdk_path" -module-cache-path "$proje
 xcrun swiftc "${args[@]}" -parse-as-library -emit-module -module-name StudyCore Sources/StudyCore/*.swift -emit-module-path "$build_root/StudyCore.swiftmodule"
 xcrun swiftc "${args[@]}" -parse-as-library -whole-module-optimization -emit-object -module-name StudyCore Sources/StudyCore/*.swift -o "$build_root/StudyCore.o"
 xcrun swiftc "${args[@]}" -I "$build_root" Tests/StudyRecordChecks/main.swift "$build_root/StudyCore.o" -o "$build_root/CoreChecks"
-"$build_root/CoreChecks" "$project_root/work/p4-evidence/core"
+"$build_root/CoreChecks" "$project_root/work/p4-v2-evidence/core"

@@ -11,6 +11,25 @@ final class StudyModel: ObservableObject {
     @Published var cardIndex = 0
     @Published var cardTitle = ""
     @Published var celebration = false
+    @Published var celebrationOpacity = 1.0
+    private var celebrationGeneration = UUID()
+    func startCelebration() {
+        let generation = UUID()
+        celebrationGeneration = generation
+        celebration = true
+        celebrationOpacity = 1
+        // Three soft dim/bright cycles, followed by a steady hold until 30 seconds.
+        for step in 1...6 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(step) * 0.4) { [weak self] in
+                guard let self = self, self.celebrationGeneration == generation else { return }
+                withAnimation(.easeInOut(duration: 0.2)) { self.celebrationOpacity = step.isMultiple(of: 2) ? 1 : 0.15 }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            guard let self = self, self.celebrationGeneration == generation else { return }
+            self.celebration = false
+        }
+    }
     @Published var isEditingHistory = false
     private var dirty: Set<UUID> = []
     private var draftWork: DispatchWorkItem?
@@ -26,7 +45,7 @@ final class StudyModel: ObservableObject {
     }
     var displayTime: String { StudyDate.timer(ledger.total(on: ledger.day)) }
     var footer: String {
-        if acceptanceMode && errorText == nil { return "验收模式 · 独立数据，可快进时间" }
+        if acceptanceMode && errorText == nil { return "模拟时间 " + StudyDate.clock(source.now) + " · 快进计入测试时长" }
         if errorText != nil { return "保存/读取失败 · 点右上角菜单查看" }
         return phase == .running ? "本地保存 · 学习时间持续累计" : "本地保存 · " + (phase == .paused ? "暂停期间不计时" : "点击开始学习")
     }
@@ -36,7 +55,7 @@ final class StudyModel: ObservableObject {
             let directory = try SQLiteLedgerStore.defaultDirectory()
             dataDirectory = directory
             let store = try SQLiteLedgerStore(directory: directory, now: source.now)
-            if acceptanceMode,let clock=source as? UICheckClock {clock.now=max(clock.now,try store.load().checkpointAt)}
+            if acceptanceMode, let clock = source as? PreviewTimeSource { clock.restore(at: try store.load().checkpointAt) }
             controller = try StudyController(source: source, store: store)
             ready = true; errorText = nil; refresh()
         } catch { ready = false; errorText = error.localizedDescription }
@@ -87,8 +106,7 @@ final class StudyModel: ObservableObject {
             try controller.markPresented(Set(pending.map(\.id)));refresh()
             cardEntryIDs=Array(pending.compactMap(\.entryID).reduce(into:[UUID]()) { result,id in if !result.contains(id){result.append(id)} })
             cardIndex=0;cardTitle=pending.count==1 ? "又完成一小时" : "已完成 \(pending.count) 个整小时"
-            withAnimation(.easeInOut(duration:0.35)){celebration=true}
-            DispatchQueue.main.asyncAfter(deadline:.now()+2) { [weak self] in withAnimation(.easeOut(duration:0.4)){self?.celebration=false} }
+            startCelebration()
             return currentEntry != nil
         } catch { errorText=error.localizedDescription;return false }
     }

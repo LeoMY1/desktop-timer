@@ -6,6 +6,10 @@
       "passed": true
     },
     {
+      "name": "all_exit_menus_have_no_shortcut",
+      "passed": true
+    },
+    {
       "name": "hourly_card_visible_above",
       "passed": true
     },
@@ -96,8 +100,20 @@
     {
       "name": "SQLite_full_record_roundtrip",
       "passed": true
+    },
+    {
+      "name": "celebration_three_dim_bright_cycles",
+      "passed": true
+    },
+    {
+      "name": "celebration_held_before_30_seconds",
+      "passed": true
+    },
+    {
+      "name": "celebration_ends_at_30_seconds",
+      "passed": true
     }
   ],
-  "stage": "P4",
-  "kind": "AppKit integration with isolated clock and SQLite"
+  "stage": "P4 v2",
+  "kind": "AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds"
 }

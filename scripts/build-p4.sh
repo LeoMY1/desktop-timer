@@ -8,7 +8,7 @@ if [ "$configuration" != "debug" ] && [ "$configuration" != "release" ]; then
   exit 2
 fi
 build_root="$project_root/work/p4-build/$configuration"
-bundle="$project_root/outputs/P4-v1/StudyTimer.app"
+bundle="$project_root/outputs/P4-v2/StudyTimer.app"
 mkdir -p "$build_root" "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 sdk_path="$(xcrun --show-sdk-path)"
 optimization="-O"
@@ -24,5 +24,5 @@ xcrun swift -target arm64-apple-macosx13.0 "$project_root/scripts/make-icon.swif
 iconutil -c icns "$project_root/work/icon/AppIcon.iconset" -o "$bundle/Contents/Resources/AppIcon.icns"
 codesign --force --sign - "$bundle"
 codesign --verify --strict --verbose=2 "$bundle"
-cp "$project_root/scripts/p4-launchers/"*.command "$project_root/outputs/P4-v1/"
+cp "$project_root/scripts/p4-launchers/"*.command "$project_root/outputs/P4-v2/"
 printf '%s\n' "$bundle"

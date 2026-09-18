@@ -21,6 +21,13 @@ extension AppDelegate {
         do {
             try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
             check("initial_stopped",model.ready && model.phase == .stopped)
+            var exits = menu.items.filter { $0.action == #selector(quit) }
+            for rootItem in NSApp.mainMenu?.items ?? [] {
+                for item in rootItem.submenu?.items ?? [] {
+                    if item.action == #selector(quit) { exits.append(item) }
+                }
+            }
+            check("all_exit_menus_have_no_shortcut",exits.count == 2 && exits.allSatisfy { $0.keyEquivalent.isEmpty })
             let visible=screen(for:panel.frame).visibleFrame
             setFrame(NSRect(x:panel.frame.minX,y:visible.maxY-panel.frame.height-8,width:288,height:176))
             let original=panel.frame
@@ -70,10 +77,31 @@ extension AppDelegate {
             let store=try SQLiteLedgerStore(directory:output.appendingPathComponent("snapshot-check"),now:clock.now)
             try store.save(snapshot);let loaded=try store.load()
             check("SQLite_full_record_roundtrip",loaded==snapshot)
-            let report:[String:Any]=["stage":"P4","kind":"AppKit integration with isolated clock and SQLite","checks":checks,
-                "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
-            try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent("ui-checks.json"))
-            print("P4 UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
+            // Return to the main run loop so scheduled animation callbacks can execute.
+            // A nested run loop inside this main-queue callback cannot service main-queue blocks.
+            let effect = StudyModel()
+            effect.startCelebration()
+            var levels: [Double] = []
+            for point in [0.65,1.05,1.45,1.85,2.25,2.65] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + point) { levels.append(effect.celebrationOpacity) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                check("celebration_three_dim_bright_cycles", levels == [0.15,1,0.15,1,0.15,1])
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 29) {
+                check("celebration_held_before_30_seconds", effect.celebration && effect.celebrationOpacity == 1)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30.4) {
+                check("celebration_ends_at_30_seconds", !effect.celebration)
+                let report:[String:Any]=["stage":"P4 v2","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
+                    "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
+                do {
+                    try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent("ui-checks.json"))
+                    print("P4 UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
+                } catch { fputs("P4 UI report failed: \(error)\n", stderr) }
+                NSApp.terminate(nil)
+            }
+            return
         } catch {fputs("P4 UI check failed: \(error)\n",stderr)}
         NSApp.terminate(nil)
     }

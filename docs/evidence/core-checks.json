@@ -184,6 +184,26 @@
     {
       "name": "quit_unselected_short_tail_saved_separately",
       "passed": true
+    },
+    {
+      "name": "real_clock_session_uses_actual_start_time",
+      "passed": true
+    },
+    {
+      "name": "preview_starts_at_current_time_not_nine",
+      "passed": true
+    },
+    {
+      "name": "preview_restore_does_not_rewind_or_count_closed_time",
+      "passed": true
+    },
+    {
+      "name": "midnight_preserves_earlier_total_notes_and_start_time",
+      "passed": true
+    },
+    {
+      "name": "midnight_paused_preserves_all_prior_totals",
+      "passed": true
     }
   ],
   "stage": "P4",

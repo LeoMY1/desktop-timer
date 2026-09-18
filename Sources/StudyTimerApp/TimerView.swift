@@ -53,7 +53,7 @@ struct TimerView: View {
                 if model.celebration {
                     HStack { Image(systemName:"sparkles"); Spacer(); Image(systemName:"sparkle") }
                         .font(.system(size:20)).foregroundColor(PrototypeTheme.accent.opacity(0.8))
-                        .allowsHitTesting(false).transition(.opacity.combined(with:.scale(scale:0.8)))
+                        .opacity(model.celebrationOpacity).allowsHitTesting(false)
                 }
             }
             HStack(spacing: 9) {

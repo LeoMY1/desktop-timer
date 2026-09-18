@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 fputs("--ui-check requires an isolated STUDY_TIMER_DATA_DIR\n", stderr)
                 exit(2)
             }
-            model.source = UICheckClock()
+            model.source = uiCheck ? UICheckClock() : PreviewTimeSource()
             model.acceptanceMode=acceptanceMode
         }
         model.load()
@@ -119,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if notePanel.isVisible { alignNote(remember:false) }
         if !uiCheck { preferences.set(NSStringFromPoint(panel.frame.origin),forKey:"timerOrigin") }
     }
-    func tick() { if acceptanceMode,let clock=model.source as? UICheckClock {clock.add(1)};model.tick();updateMenu();offerReminders() }
+    func tick() { model.tick();updateMenu();offerReminders() }
     func alignNote(adjust:Bool=true,remember:Bool=true) {
         if !adjust { notePanel.setFrameOrigin(NSPoint(x:panel.frame.minX,y:panel.frame.maxY+3));return }
         let placement=PanelLayout.above(timer:panel.frame,popupSize:NSSize(width:288,height:300),visible:screen(for:panel.frame).visibleFrame)
@@ -203,14 +203,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for (title,value) in [("跟随系统外观","system"),("浅色外观","light"),("深色外观","dark")] { add(title,#selector(setAppearance(_:))).representedObject=value }
         if acceptanceMode {
             menu.addItem(.separator())
-            add("验收模式 · 测试数据独立保存",nil)
+            add("模拟验收 · 快进会增加测试时长",nil)
             for minutes in [1,30,60,180] {add("推进 \(minutes) 分钟",#selector(advanceAcceptance(_:))).representedObject=minutes}
-            add("推进到次日 00:20",#selector(advanceAcceptanceMidnight))
+            add("模拟持续学习至次日 00:20…",#selector(advanceAcceptanceMidnight))
         }
-        menu.addItem(.separator()); add("退出",#selector(quit),key:"q")
+        menu.addItem(.separator()); add("退出",#selector(quit))
         statusItem.menu=menu
         let main=NSMenu(); let appItem=NSMenuItem(); let appMenu=NSMenu()
-        let quitItem=NSMenuItem(title:"退出学习计时",action:#selector(quit),keyEquivalent:"q"); quitItem.target=self
+        let quitItem=NSMenuItem(title:"退出学习计时",action:#selector(quit),keyEquivalent:""); quitItem.target=self
         appMenu.addItem(quitItem); appItem.submenu=appMenu; main.addItem(appItem)
         let editItem=NSMenuItem(title:"编辑",action:nil,keyEquivalent:"")
         let edit=NSMenu(title:"编辑")
@@ -229,12 +229,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.autoenablesItems=false
     }
     @objc func advanceAcceptance(_ item:NSMenuItem) {
-        guard acceptanceMode,let clock=model.source as? UICheckClock,let minutes=item.representedObject as? Int else{return}
+        guard acceptanceMode,let clock=model.source as? PreviewTimeSource,let minutes=item.representedObject as? Int else{return}
         clock.add(Double(minutes)*60);tick()
     }
     @objc func advanceAcceptanceMidnight() {
-        guard acceptanceMode,let clock=model.source as? UICheckClock else{return}
-        clock.now=StudyDate.nextMidnight(clock.now).addingTimeInterval(1200);tick()
+        guard acceptanceMode,let clock=model.source as? PreviewTimeSource else{return}
+        let target = StudyDate.nextMidnight(clock.now).addingTimeInterval(1200)
+        let alert = NSAlert()
+        alert.messageText = "模拟跨日：快进时间将计入测试记录"
+        let elapsed = StudyDate.duration(target.timeIntervalSince(clock.now))
+        alert.informativeText = "当前模拟时间：\(StudyDate.day(clock.now)) \(StudyDate.clock(clock.now))\n目标：\(StudyDate.day(target)) 00:20\n" + (model.phase == .running ? "正在计时，将新增约 \(elapsed) 的模拟学习时长，并按午夜拆分。" : "当前未运行，不增加学习时长。") + "\n仅影响独立验收数据，已有学习段保留。"
+        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "确认模拟快进")
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertSecondButtonReturn else { return }
+        clock.add(max(0, target.timeIntervalSince(clock.now))); tick()
     }
     @objc func showSaveStatus() {
         if model.errorText != nil { showError(); return }

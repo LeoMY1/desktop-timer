@@ -298,6 +298,42 @@ test("quit_unselected_short_tail_saved_separately") {
  let(t,_,c)=try fixture();try c.perform(.start);t.add(300);try c.perform(.stop);try c.perform(.quit)
  try expect(c.ledger.entries.count==1 && c.ledger.entries[0].seconds==300 && !c.ledger.entries[0].pendingTail)
 }
+test("real_clock_session_uses_actual_start_time") {
+ let before=Date();let clock=ContinuousTimeSource();let store=MemoryStore(clock.now)
+ let controller=try StudyController(source:clock,store:store);try controller.perform(.start)
+ let start=controller.ledger.sessions[0].startedAt
+ try expect(start >= before && start <= Date() && controller.ledger.sessions[0].day==StudyDate.day(start))
+}
+test("preview_starts_at_current_time_not_nine") {
+ let base=FakeClock("2026-09-18T20:37:42+08:00");let clock=PreviewTimeSource(base:base)
+ try expect(clock.now==base.now && StudyDate.clock(clock.now)=="20:37")
+ base.add(7200);try expect(clock.now==base.now)
+ clock.add(1800);try expect(clock.now.timeIntervalSince(base.now)==1800)
+}
+test("preview_restore_does_not_rewind_or_count_closed_time") {
+ let base=FakeClock("2026-09-18T20:37:42+08:00");let clock=PreviewTimeSource(base:base)
+ let stored=base.now.addingTimeInterval(86400);clock.restore(at:stored)
+ try expect(clock.now==stored);base.add(60);try expect(clock.now==stored.addingTimeInterval(60))
+ clock.restore(at:base.now.addingTimeInterval(-3600));try expect(clock.now==base.now)
+}
+test("midnight_preserves_earlier_total_notes_and_start_time") {
+ let(t,s,c)=try fixture("2026-09-18T18:17:00+08:00")
+ try c.perform(.start);t.add(1800);try c.perform(.stop)
+ let id=c.ledger.entries[0].id;try c.editNotes([id:"此前的真实学习记录"])
+ let earlier=c.ledger.sessions[0]
+ t.now=ISO8601DateFormatter().date(from:"2026-09-18T23:40:00+08:00")!
+ try c.perform(.start);t.add(2400);c.tick()
+ try expect(c.ledger.sessions[0]==earlier && c.ledger.entries.first{$0.id==id}?.note=="此前的真实学习记录")
+ try expect(near(c.ledger.total(on:"2026-09-18"),3000) && near(c.ledger.total(on:"2026-09-19"),1200))
+ let restored=try StudyController(source:t,store:s)
+ try expect(near(restored.ledger.total(on:"2026-09-18"),3000) && restored.ledger.sessions[0]==earlier)
+}
+test("midnight_paused_preserves_all_prior_totals") {
+ let(t,_,c)=try fixture("2026-09-18T20:17:00+08:00");try c.perform(.start)
+ t.add(600);try c.perform(.pause);let total=c.ledger.total(on:"2026-09-18")
+ t.now=ISO8601DateFormatter().date(from:"2026-09-19T00:20:00+08:00")!;c.tick()
+ try expect(c.ledger.total(on:"2026-09-18")==total && c.ledger.total(on:"2026-09-19")==0 && c.ledger.phase == .paused)
+}
 let passed=checks.filter { $0["passed"] as? Bool == true }.count
 let report:[String:Any] = ["stage":"P4", "kind":"isolated clocks and SQLite", "checks":checks, "allPassed":passed==checks.count,
  "notCovered":["Actual system sleep", "Actual overnight midnight", "UI window behavior"]]

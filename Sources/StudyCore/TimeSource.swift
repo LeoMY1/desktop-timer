@@ -42,3 +42,14 @@ public enum StudyDate {
         return minutes % 60 == 0 ? "\(minutes / 60)小时" : "\(minutes / 60)小时\(minutes % 60)分钟"
     }
 }
+
+/// User-facing isolated preview starts at the current real time, never a fixed fixture date.
+/// The continuous source keeps elapsed time independent of UI refresh frequency and sleep.
+public final class PreviewTimeSource: TimeSource {
+    private let base: TimeSource
+    private var offset: TimeInterval = 0
+    public init(base: TimeSource = ContinuousTimeSource()) { self.base = base }
+    public var now: Date { base.now.addingTimeInterval(offset) }
+    public func add(_ seconds: TimeInterval) { offset += max(0, seconds) }
+    public func restore(at checkpoint: Date) { offset = max(0, checkpoint.timeIntervalSince(base.now)) }
+}
