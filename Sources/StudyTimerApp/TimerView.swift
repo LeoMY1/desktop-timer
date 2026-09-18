@@ -41,7 +41,7 @@ struct TimerView: View {
                         .frame(width: 20, height: 20)
                         .contentShape(Rectangle())
                 }
-                    .buttonStyle(.plain).foregroundColor(.secondary).help("计时操作与外观").accessibilityLabel("计时菜单")
+                    .buttonStyle(.plain).foregroundColor(.secondary).help("计时操作与记录").accessibilityLabel("计时菜单")
                     .timerControl()
             }
             ZStack {

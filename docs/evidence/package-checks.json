@@ -1,0 +1,11 @@
+{
+  "allPassed": true,
+  "checks": [
+    "ZIP CRCs valid",
+    "One root AGENTS in source",
+    "No user/test databases in archives",
+    "No test launcher or internal app in daily package",
+    "Extracted application signature valid",
+    "Extracted executable permissions and bytes retained"
+  ]
+}

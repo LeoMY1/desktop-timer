@@ -1,0 +1,9 @@
+{
+  "allPassed": true,
+  "checks": [
+    "P4 sessions preserved",
+    "P4 notes and tail entries preserved",
+    "P4 milestone presentation state preserved",
+    "Original formal payload untouched"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "allPassed": true,
+  "checks": [
+    "Stopped startup with preseeded total",
+    "Final menu contains no phase label, preview, fast forward or appearance demo",
+    "Real elapsed time triggers one hourly card",
+    "Chinese multiline note entered and saved through native note panel",
+    "History displays both note lines",
+    "Manual stop leaves pending tail",
+    "Mouse menu exit resolves tail by merging within same session",
+    "Restart shows stopped state and saved note",
+    "Sessions, entries, milestones identical across exit interval; no offline accrual or repeat reminder"
+  ]
+}

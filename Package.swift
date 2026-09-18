@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "StudyTimerPrototype",
+    name: "StudyTimer",
     platforms: [.macOS(.v13)],
-    products: [.executable(name: "StudyTimerPrototype", targets: ["StudyTimerPrototype"]), .executable(name: "StudyTimer", targets: ["StudyTimerApp"])],
+    products: [.executable(name: "StudyTimer", targets: ["StudyTimerApp"])],
     targets: [
         .target(name: "WindowGeometry"),
         .systemLibrary(name: "CSQLite"),
@@ -13,7 +13,6 @@ let package = Package(
         .executableTarget(name: "RecordChecks", dependencies: ["StudyCore", "CSQLite"], path: "Tests/StudyRecordChecks"),
         .executableTarget(name: "CoreChecks", dependencies: ["StudyCore", "CSQLite"], path: "Tests/StudyCoreChecks"),
         .executableTarget(name: "ProcessProbe", dependencies: ["StudyCore"], path: "Tests/StudyProcessProbe"),
-        .executableTarget(name: "StudyTimerPrototype", dependencies: ["WindowGeometry"]),
         .executableTarget(name: "GeometryChecks", dependencies: ["WindowGeometry"], path: "Tests/WindowGeometryChecks")
     ]
 )

@@ -1,3 +1,4 @@
+#if INTERNAL_TESTING
 import AppKit
 import StudyCore
 
@@ -28,6 +29,32 @@ extension AppDelegate {
                 }
             }
             check("all_exit_menus_have_no_shortcut",exits.count == 2 && exits.allSatisfy { $0.keyEquivalent.isEmpty })
+            check("timer_cannot_become_key", !panel.canBecomeKey)
+            check("nonactivating_panels", panel.styleMask.contains(.nonactivatingPanel) && notePanel.styleMask.contains(.nonactivatingPanel))
+            check("all_spaces_fullscreen_flags", panel.collectionBehavior.contains(.canJoinAllSpaces) && panel.collectionBehavior.contains(.fullScreenAuxiliary))
+            check("floating_no_hide_on_deactivate", panel.level == .floating && !panel.hidesOnDeactivate)
+            func findDrag(_ view: NSView) -> DragView? {
+                if let drag = view as? DragView { return drag }
+                return view.subviews.compactMap { findDrag($0) }.first
+            }
+            func checkHitAreas(_ phase: String) {
+                settle()
+                let root = panel.contentView!
+                let drag = findDrag(root)
+                func hit(_ point: NSPoint) -> NSView? {
+                    guard let drag = drag else { return nil }
+                    return root.hitTest(drag.convert(point, to: root.superview))
+                }
+                let edges = [NSPoint(x:2,y:88),NSPoint(x:286,y:88),NSPoint(x:144,y:2),NSPoint(x:144,y:174)]
+                check("\(phase)_four_edges_drag", drag != nil && edges.allSatisfy { hit($0) === drag })
+                let blanks = [NSPoint(x:144,y:76),NSPoint(x:144,y:156),NSPoint(x:7,y:130)]
+                check("\(phase)_digits_blank_drag", drag != nil && blanks.allSatisfy { hit($0) === drag })
+                let controls = drag?.excludedRects ?? []
+                let expected = model.phase == .stopped ? 3 : 4
+                check("\(phase)_buttons_not_drag", controls.count == expected && controls.allSatisfy { let view = hit(NSPoint(x:$0.midX,y:$0.midY)); return view != nil && view !== drag })
+                check("\(phase)_two_full_icon_targets", controls.filter { abs($0.width-20)<0.1 && abs($0.height-20)<0.1 }.count == 2)
+            }
+            checkHitAreas("stopped")
             let visible=screen(for:panel.frame).visibleFrame
             setFrame(NSRect(x:panel.frame.minX,y:visible.maxY-panel.frame.height-8,width:288,height:176))
             let original=panel.frame
@@ -38,6 +65,8 @@ extension AppDelegate {
             check("front_app_unchanged",NSWorkspace.shared.frontmostApplication?.processIdentifier==front)
             check("top_edge_shift",panel.frame.minY<original.minY && restoreFrame==original)
             check("running_during_card",model.phase == .running && model.displayTime=="01:00")
+            checkHitAreas("running")
+            primaryAction();checkHitAreas("paused");primaryAction()
             let first=model.currentEntry!.id
             model.setNote(first,"高等数学 · 极限与连续");check("draft_flush",model.flushDrafts())
             clock.add(3600);tick()
@@ -93,7 +122,7 @@ extension AppDelegate {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 30.4) {
                 check("celebration_ends_at_30_seconds", !effect.celebration)
-                let report:[String:Any]=["stage":"P4 v2","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
+                let report:[String:Any]=["stage":"P5","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
                     "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
                 do {
                     try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent("ui-checks.json"))
@@ -106,3 +135,5 @@ extension AppDelegate {
         NSApp.terminate(nil)
     }
 }
+
+#endif

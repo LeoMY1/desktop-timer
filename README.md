@@ -1,30 +1,28 @@
-# 桌面悬浮计时应用
+# 学习计时
 
-**P4 v2 已交付，等待用户验收；P5 未开始。** 用户已授权进入 P4，确认真实睡眠和锁屏测试通过；自然跨午夜仍未实测。
+**P4 已由用户确认完成；P5 1.0.0 已交付，等待用户最终验收。** 本地 macOS 学习计时器：悬浮日累计、暂停/继续/停止、整小时鼓励、备注与每日历史记录。
 
 ## 打开
-双击 `outputs/P4-v2/StudyTimer.app`。先退出旧版本，以免混淆。v2 延续 P4 正式数据，旧验收数据保持原样。
+双击 `outputs/P5-v1/StudyTimer.app`。先退出旧版本。继续使用现有 P4 正式记录，启动不自动计时；最终应用没有模拟快进或验收入口，退出只用鼠标点击菜单。
 
-已支持真实计时、日累计、北京时间归日、SQLite 保存，以及累计整小时无声鼓励、上方备注卡片、提醒合并与排队、历史备注编辑、尾段单独或合并。退出时自动处理尚未选择的尾段，并保留文字。
+[使用说明](docs/user-guide.md) · [最终验收单](docs/p5-testing.md) · [自测记录](docs/p5-self-test.md) · [阶段状态](docs/acceptance.md)
 
-- [P4 测试步骤](docs/p4-testing.md)
-- [P4 v2 修复与自测](docs/p4-v2-self-test.md)
-- [阶段验收状态](docs/acceptance.md)
-
-交付目录提供 `开始独立验收.command` 和 `继续上次验收.command`，从当前时间开始，可模拟快进整小时/跨日；快进会增加测试时长，不改系统时间、不写正式库。日常使用直接打开应用即可。
-
-## 数据与构建
-正式数据位于 `~/Library/Application Support/StudyTimerP4`。备注约 0.4 秒自动保存，关键操作立即保存，运行时每 5 秒保存检查点。环境变量 STUDY_TIMER_DATA_DIR 支持绝对路径隔离测试。
+## 构建与检查
+当前 Apple Silicon Mac、macOS 13 部署目标、Swift 5.8 及 Command Line Tools，无第三方依赖，使用系统 SQLite。
 
 ```sh
-bash scripts/build-p4.sh release
-bash scripts/test-p4.sh
-bash scripts/test-ui-p4.sh
-bash scripts/open-p4-acceptance.sh
+bash scripts/build-p5.sh release
+bash scripts/test-p5.sh
+bash scripts/test-geometry-p5.sh
+bash scripts/test-process-p5.sh
+bash scripts/build-p5.sh test
+bash scripts/test-ui-p5.sh
 ```
 
-当前源码为 P4，旧阶段重建请使用当时已交付的源码包。当前构建通过 CLT 的 xcrun swiftc，使用系统 SQLite，无第三方库。目标 arm64 / macOS 13，仅当前 Mac 验证。本地 ad-hoc 签名，尚未公证发布。
+Release 应用为 `outputs/P5-v1/StudyTimer.app`。内部检查构建单独位于 `work/p5-build/test/StudyTimer-Checks.app`，仅内部版本定义 INTERNAL_TESTING；不随日常应用交付。检查使用独立数据目录，不覆盖正式库。所有当前源代码的正式构建请用 P5 脚本；历史 P2/P3/P4 重建使用对应阶段已交付的源码包。
+
+`STUDY_TIMER_DATA_DIR` 可显式指定绝对路径进行隔离测试。默认目录保持 `~/Library/Application Support/StudyTimerP4`，SQLite/快照版本 2，兼容已有 P4 数据。退出后备份整个目录。
+
+本地 ad-hoc 签名，未公证发行；仅当前 Mac 实测，自然跨午夜仍未实测。完整限制见使用说明。
 
 [需求](docs/requirements.md) · [规格](docs/spec.md) · [阶段计划](docs/delivery-plan.md) · [开发规则](AGENTS.md)
-
-[浅色设计](design/p0/v3/01-overall-light.png) · [深色参考](design/p0/v1/02-states-dark.png)

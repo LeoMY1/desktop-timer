@@ -37,7 +37,9 @@ final class StudyModel: ObservableObject {
     var controller: StudyController?
     var source: TimeSource = ContinuousTimeSource()
     var dataDirectory: URL?
+    #if INTERNAL_TESTING
     var acceptanceMode = false
+    #endif
     var phase: StudyPhase { ledger.phase }
     var phaseTitle: String {
         if !ready { return "无法加载" }
@@ -45,7 +47,9 @@ final class StudyModel: ObservableObject {
     }
     var displayTime: String { StudyDate.timer(ledger.total(on: ledger.day)) }
     var footer: String {
+        #if INTERNAL_TESTING
         if acceptanceMode && errorText == nil { return "模拟时间 " + StudyDate.clock(source.now) + " · 快进计入测试时长" }
+        #endif
         if errorText != nil { return "保存/读取失败 · 点右上角菜单查看" }
         return phase == .running ? "本地保存 · 学习时间持续累计" : "本地保存 · " + (phase == .paused ? "暂停期间不计时" : "点击开始学习")
     }
@@ -55,7 +59,9 @@ final class StudyModel: ObservableObject {
             let directory = try SQLiteLedgerStore.defaultDirectory()
             dataDirectory = directory
             let store = try SQLiteLedgerStore(directory: directory, now: source.now)
+            #if INTERNAL_TESTING
             if acceptanceMode, let clock = source as? PreviewTimeSource { clock.restore(at: try store.load().checkpointAt) }
+            #endif
             controller = try StudyController(source: source, store: store)
             ready = true; errorText = nil; refresh()
         } catch { ready = false; errorText = error.localizedDescription }

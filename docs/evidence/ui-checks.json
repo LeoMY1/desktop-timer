@@ -10,6 +10,38 @@
       "passed": true
     },
     {
+      "name": "timer_cannot_become_key",
+      "passed": true
+    },
+    {
+      "name": "nonactivating_panels",
+      "passed": true
+    },
+    {
+      "name": "all_spaces_fullscreen_flags",
+      "passed": true
+    },
+    {
+      "name": "floating_no_hide_on_deactivate",
+      "passed": true
+    },
+    {
+      "name": "stopped_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_digits_blank_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_buttons_not_drag",
+      "passed": true
+    },
+    {
+      "name": "stopped_two_full_icon_targets",
+      "passed": true
+    },
+    {
       "name": "hourly_card_visible_above",
       "passed": true
     },
@@ -27,6 +59,38 @@
     },
     {
       "name": "running_during_card",
+      "passed": true
+    },
+    {
+      "name": "running_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "running_digits_blank_drag",
+      "passed": true
+    },
+    {
+      "name": "running_buttons_not_drag",
+      "passed": true
+    },
+    {
+      "name": "running_two_full_icon_targets",
+      "passed": true
+    },
+    {
+      "name": "paused_four_edges_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_digits_blank_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_buttons_not_drag",
+      "passed": true
+    },
+    {
+      "name": "paused_two_full_icon_targets",
       "passed": true
     },
     {
@@ -114,6 +178,6 @@
       "passed": true
     }
   ],
-  "stage": "P4 v2",
+  "stage": "P5",
   "kind": "AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds"
 }

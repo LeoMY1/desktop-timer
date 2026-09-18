@@ -21,10 +21,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var stopItem: NSMenuItem!
     var retryItem: NSMenuItem!
     var dragInitialFrame: NSRect?
+    #if INTERNAL_TESTING
     let acceptanceMode = CommandLine.arguments.contains("--acceptance-mode")
     let uiCheck = CommandLine.arguments.contains("--ui-check")
+    #else
+    let uiCheck = false
+    #endif
     var preferences: UserDefaults { .standard }
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if INTERNAL_TESTING
         if uiCheck || acceptanceMode {
             guard ProcessInfo.processInfo.environment["STUDY_TIMER_DATA_DIR"] != nil else {
                 fputs("--ui-check requires an isolated STUDY_TIMER_DATA_DIR\n", stderr)
@@ -33,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.source = uiCheck ? UICheckClock() : PreviewTimeSource()
             model.acceptanceMode=acceptanceMode
         }
+        #endif
         model.load()
         buildWindow()
         buildMenus()
@@ -54,7 +60,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             })
         }
         updateMenu()
+        #if INTERNAL_TESTING
         if uiCheck { DispatchQueue.main.asyncAfter(deadline: .now()+0.3) { self.runUICheck() } }
+        #endif
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showTimer(); return true }
@@ -82,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !frame.origin.x.isFinite || !frame.origin.y.isFinite { frame.origin=visible.origin }
         frame=PanelLayout.clamped(frame,to:screen(for:frame).visibleFrame)
         panel=PrototypePanel(frame:frame,permitsTextInput:false)
-        panel.title="学习计时 · P4"; panel.identifier=NSUserInterfaceItemIdentifier("p4-timer")
+        panel.title="学习计时"; panel.identifier=NSUserInterfaceItemIdentifier("study-timer")
         panel.contentView=PassiveHostingView(rootView:TimerView(model:model,
             primary:{ [weak self] in self?.primaryAction() },stop:{ [weak self] in self?.stopAction() },
             history:{ [weak self] in self?.openHistory() },showMenu:{ [weak self] in self?.showPopupMenu() },
@@ -179,26 +187,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openHistory() {
         if historyWindow == nil {
             let window=NSWindow(contentRect:NSRect(x:0,y:0,width:850,height:620),styleMask:[.titled,.closable,.miniaturizable,.resizable],backing:.buffered,defer:false)
-            window.title="学习记录"; window.identifier=NSUserInterfaceItemIdentifier("p4-history")
+            window.title="学习记录"; window.identifier=NSUserInterfaceItemIdentifier("study-history")
             window.minSize=NSSize(width:760,height:590); window.isReleasedWhenClosed=false
             window.titlebarAppearsTransparent=true
             window.contentView=NSHostingView(rootView:HistoryView(model:model,showTail:{[weak self] id in self?.showTail(id)})); window.center(); historyWindow=window
         }
         historyWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
     }
+    #if INTERNAL_TESTING
     @objc func setAppearance(_ sender:NSMenuItem) {
         let value=sender.representedObject as? String ?? "system"
         NSApp.appearance=value == "dark" ? NSAppearance(named:.darkAqua) : value == "light" ? NSAppearance(named:.aqua) : nil
     }
+    #endif
     func showPopupMenu() { menu.popUp(positioning:nil,at:NSPoint(x:260,y:153),in:panel.contentView) }
     func buildMenus() {
         statusItem=NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength)
         statusItem.button?.image=NSImage(systemSymbolName:"timer",accessibilityDescription:"学习计时")
         statusItem.button?.image?.isTemplate=true; statusItem.button?.toolTip="学习计时"
-        add("学习计时 · P4",nil); menu.addItem(.separator())
+        add("学习计时",nil); menu.addItem(.separator())
         primaryItem=add("开始学习",#selector(primaryAction)); stopItem=add("停止学习",#selector(stopAction))
         menu.addItem(.separator()); add("显示计时窗",#selector(showTimer)); add("隐藏计时窗",#selector(hideTimer)); add("学习记录",#selector(openHistory))
         menu.addItem(.separator()); retryItem=add("重试保存/读取",#selector(retry)); add("查看保存状态",#selector(showSaveStatus))
+        #if INTERNAL_TESTING
         menu.addItem(.separator())
         for (title,value) in [("跟随系统外观","system"),("浅色外观","light"),("深色外观","dark")] { add(title,#selector(setAppearance(_:))).representedObject=value }
         if acceptanceMode {
@@ -207,6 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             for minutes in [1,30,60,180] {add("推进 \(minutes) 分钟",#selector(advanceAcceptance(_:))).representedObject=minutes}
             add("模拟持续学习至次日 00:20…",#selector(advanceAcceptanceMidnight))
         }
+        #endif
         menu.addItem(.separator()); add("退出",#selector(quit))
         statusItem.menu=menu
         let main=NSMenu(); let appItem=NSMenuItem(); let appMenu=NSMenu()
@@ -228,6 +240,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         retryItem?.isHidden=model.errorText == nil
         menu.autoenablesItems=false
     }
+    #if INTERNAL_TESTING
     @objc func advanceAcceptance(_ item:NSMenuItem) {
         guard acceptanceMode,let clock=model.source as? PreviewTimeSource,let minutes=item.representedObject as? Int else{return}
         clock.add(Double(minutes)*60);tick()
@@ -245,6 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard alert.runModal() == .alertSecondButtonReturn else { return }
         clock.add(max(0, target.timeIntervalSince(clock.now))); tick()
     }
+    #endif
     @objc func showSaveStatus() {
         if model.errorText != nil { showError(); return }
         let alert=NSAlert(); alert.messageText="学习记录保存在本机"
