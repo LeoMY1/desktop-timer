@@ -2,51 +2,79 @@ import AppKit
 import StudyCore
 
 final class UICheckClock: TimeSource {
-    var now=ISO8601DateFormatter().date(from:"2026-09-18T23:40:00+08:00")!
-    func add(_ seconds:Double) { now=now.addingTimeInterval(seconds) }
+    var now=ISO8601DateFormatter().date(from:"2026-09-18T09:00:00+08:00")!
+    func add(_ seconds:Double) {now=now.addingTimeInterval(seconds)}
 }
 extension AppDelegate {
     func runUICheck() {
-        guard let index=CommandLine.arguments.firstIndex(of:"--ui-check"), CommandLine.arguments.count>index+1,
-              let clock=model.source as? UICheckClock else { exit(2) }
+        guard let index=CommandLine.arguments.firstIndex(of:"--ui-check"),CommandLine.arguments.count>index+1,
+              let clock=model.source as? UICheckClock else {exit(2)}
         let output=URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true)
         var checks:[[String:Any]]=[]
-        func check(_ name:String,_ result:Bool) { checks.append(["name":name,"passed":result]) }
-        func settle() { RunLoop.current.run(until:Date().addingTimeInterval(0.15)) }
-        func capture(_ window:NSWindow,_ name:String) {
-            settle()
-            guard let view=window.contentView,let bitmap=view.bitmapImageRepForCachingDisplay(in:view.bounds) else { return }
+        func check(_ name:String,_ result:Bool) {checks.append(["name":name,"passed":result])}
+        func settle(){RunLoop.current.run(until:Date().addingTimeInterval(0.12))}
+        func capture(_ window:NSWindow,_ name:String){
+            settle();guard let view=window.contentView,let bitmap=view.bitmapImageRepForCachingDisplay(in:view.bounds) else{return}
             view.cacheDisplay(in:view.bounds,to:bitmap)
             try? bitmap.representation(using:.png,properties:[:])?.write(to:output.appendingPathComponent(name))
         }
         do {
             try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
             check("initial_stopped",model.ready && model.phase == .stopped)
-            primaryAction(); clock.add(65); tick()
-            check("real_model_drives_HH_MM",model.displayTime=="00:01" && model.phase == .running)
-            primaryAction(); clock.add(30); tick()
-            check("pause_excludes_elapsed",model.displayTime=="00:01" && model.ledger.total(on:model.ledger.day)==65)
-            primaryAction(); clock.add(1135); tick()
-            check("midnight_current_day_resets",model.ledger.day=="2026-09-19" && model.ledger.total(on:model.ledger.day)==30)
-            check("midnight_previous_day_saved",model.ledger.total(on:"2026-09-18")==1170)
-            hideTimer(); clock.add(120); tick()
-            check("hidden_window_keeps_accruing",!panel.isVisible && model.ledger.total(on:model.ledger.day)==150)
-            showTimer(); stopAction()
-            check("stop_keeps_total",model.phase == .stopped && model.displayTime=="00:02")
-            primaryAction(); clock.add(60); stopAction()
-            check("new_session_retains_daily_total",model.ledger.sessions.count==3 && model.ledger.total(on:model.ledger.day)==210)
-            check("nonactivating_timer",!panel.canBecomeKey && panel.styleMask.contains(.nonactivatingPanel))
-            check("floating_all_spaces",panel.level == .floating && panel.collectionBehavior.contains(.canJoinAllSpaces))
+            let visible=screen(for:panel.frame).visibleFrame
+            setFrame(NSRect(x:panel.frame.minX,y:visible.maxY-panel.frame.height-8,width:288,height:176))
+            let original=panel.frame
+            let front=NSWorkspace.shared.frontmostApplication?.processIdentifier
+            primaryAction();clock.add(3600);tick();settle()
+            check("hourly_card_visible_above",notePanel.isVisible && notePanel.frame.minY>panel.frame.maxY)
+            check("hourly_panel_not_key",!notePanel.isKeyWindow)
+            check("front_app_unchanged",NSWorkspace.shared.frontmostApplication?.processIdentifier==front)
+            check("top_edge_shift",panel.frame.minY<original.minY && restoreFrame==original)
+            check("running_during_card",model.phase == .running && model.displayTime=="01:00")
+            let first=model.currentEntry!.id
+            model.setNote(first,"高等数学 · 极限与连续");check("draft_flush",model.flushDrafts())
+            clock.add(3600);tick()
+            check("new_hour_keeps_active_card",model.currentEntry?.id==first && model.note(first)=="高等数学 · 极限与连续")
+            check("new_hour_queued",ReminderCoordinator.pending(in:model.ledger).count==1)
+            closeNote();check("close_restores_top_position",panel.frame==original)
+            tick();check("next_reminder_after_close",model.currentEntry?.id != first && notePanel.isVisible)
+            let second=model.currentEntry!.id
+            model.setNote(second,"英语阅读 · 精读两篇");_ = model.flushDrafts();closeNote()
+            clock.add(1800);stopAction()
+            check("stop_tail_visible",notePanel.isVisible && model.currentEntry?.pendingTail==true)
+            check("tail_can_merge",model.ledger.canMerge(model.currentEntry!.id))
+            model.setNote(model.currentEntry!.id,"复习错题")
+            saveNote(merge:true)
+            check("merge_preserves_total",model.ledger.total(on:model.ledger.day)==9000 && model.ledger.entries.count==2)
+            check("merge_preserves_both_texts",model.ledger.entries.last!.note=="英语阅读 · 精读两篇\n复习错题")
+            check("merged_note_display_matches_saved",model.note(second)==model.ledger.entries.last!.note)
+            primaryAction();clock.add(300);stopAction()
+            check("short_session_no_previous_merge",!model.ledger.canMerge(model.currentEntry!.id))
+            saveNote(merge:false);check("separate_resolves_tail",!model.ledger.entries.last!.pendingTail)
+            primaryAction();hideTimer();clock.add(7200);tick()
+            check("hidden_reminders_retained",!notePanel.isVisible && ReminderCoordinator.pending(in:model.ledger).count==2)
+            showTimer();check("missed_hours_one_batch",notePanel.isVisible && model.cardEntryIDs.count==2)
+            let batch=model.cardEntryIDs;nextNote(1)
+            check("batch_navigation",model.currentEntry?.id==batch[1])
             for (name,theme) in [("light",NSAppearance.Name.aqua),("dark",NSAppearance.Name.darkAqua)] {
                 NSApp.appearance=NSAppearance(named:theme)
-                capture(panel,"\(name)-timer.png")
-                openHistory(); capture(historyWindow!,"\(name)-history.png")
+                capture(panel,"\(name)-timer.png");capture(notePanel,"\(name)-hourly.png")
+                openHistory();capture(historyWindow!,"\(name)-history.png")
             }
-            let report:[String:Any]=["stage":"P3","kind":"AppKit integration using isolated clock and SQLite",
-                "checks":checks,"allPassed":checks.allSatisfy { $0["passed"] as? Bool == true }]
+            closeNote();stopAction()
+            if notePanel.isVisible {capture(notePanel,"tail-card.png");closeNote()}
+            let remaining=ReminderCoordinator.pending(in:model.ledger).count
+            tick();check("already_presented_not_repeated",remaining==0 && ReminderCoordinator.pending(in:model.ledger).isEmpty)
+            check("quit_flush_and_settle",model.perform(.quit) && !model.ledger.entries.contains{$0.pendingTail})
+            let snapshot=model.ledger
+            let store=try SQLiteLedgerStore(directory:output.appendingPathComponent("snapshot-check"),now:clock.now)
+            try store.save(snapshot);let loaded=try store.load()
+            check("SQLite_full_record_roundtrip",loaded==snapshot)
+            let report:[String:Any]=["stage":"P4","kind":"AppKit integration with isolated clock and SQLite","checks":checks,
+                "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
             try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent("ui-checks.json"))
-            print("P3 UI checks: \(checks.filter { $0["passed"] as? Bool == true }.count)/\(checks.count)")
-        } catch { fputs("UI check failed: \(error)\n",stderr) }
+            print("P4 UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
+        } catch {fputs("P4 UI check failed: \(error)\n",stderr)}
         NSApp.terminate(nil)
     }
 }

@@ -50,6 +50,11 @@ struct TimerView: View {
                     .foregroundColor(PrototypeTheme.primaryInk)
                     .frame(maxWidth: .infinity, minHeight: 56)
 
+                if model.celebration {
+                    HStack { Image(systemName:"sparkles"); Spacer(); Image(systemName:"sparkle") }
+                        .font(.system(size:20)).foregroundColor(PrototypeTheme.accent.opacity(0.8))
+                        .allowsHitTesting(false).transition(.opacity.combined(with:.scale(scale:0.8)))
+                }
             }
             HStack(spacing: 9) {
                 Button(action: primary) {

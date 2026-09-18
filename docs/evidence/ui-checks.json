@@ -6,42 +6,98 @@
       "passed": true
     },
     {
-      "name": "real_model_drives_HH_MM",
+      "name": "hourly_card_visible_above",
       "passed": true
     },
     {
-      "name": "pause_excludes_elapsed",
+      "name": "hourly_panel_not_key",
       "passed": true
     },
     {
-      "name": "midnight_current_day_resets",
+      "name": "front_app_unchanged",
       "passed": true
     },
     {
-      "name": "midnight_previous_day_saved",
+      "name": "top_edge_shift",
       "passed": true
     },
     {
-      "name": "hidden_window_keeps_accruing",
+      "name": "running_during_card",
       "passed": true
     },
     {
-      "name": "stop_keeps_total",
+      "name": "draft_flush",
       "passed": true
     },
     {
-      "name": "new_session_retains_daily_total",
+      "name": "new_hour_keeps_active_card",
       "passed": true
     },
     {
-      "name": "nonactivating_timer",
+      "name": "new_hour_queued",
       "passed": true
     },
     {
-      "name": "floating_all_spaces",
+      "name": "close_restores_top_position",
+      "passed": true
+    },
+    {
+      "name": "next_reminder_after_close",
+      "passed": true
+    },
+    {
+      "name": "stop_tail_visible",
+      "passed": true
+    },
+    {
+      "name": "tail_can_merge",
+      "passed": true
+    },
+    {
+      "name": "merge_preserves_total",
+      "passed": true
+    },
+    {
+      "name": "merge_preserves_both_texts",
+      "passed": true
+    },
+    {
+      "name": "merged_note_display_matches_saved",
+      "passed": true
+    },
+    {
+      "name": "short_session_no_previous_merge",
+      "passed": true
+    },
+    {
+      "name": "separate_resolves_tail",
+      "passed": true
+    },
+    {
+      "name": "hidden_reminders_retained",
+      "passed": true
+    },
+    {
+      "name": "missed_hours_one_batch",
+      "passed": true
+    },
+    {
+      "name": "batch_navigation",
+      "passed": true
+    },
+    {
+      "name": "already_presented_not_repeated",
+      "passed": true
+    },
+    {
+      "name": "quit_flush_and_settle",
+      "passed": true
+    },
+    {
+      "name": "SQLite_full_record_roundtrip",
       "passed": true
     }
   ],
-  "stage": "P3",
-  "kind": "AppKit integration using isolated clock and SQLite"
+  "stage": "P4",
+  "kind": "AppKit integration with isolated clock and SQLite"
 }

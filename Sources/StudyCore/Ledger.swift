@@ -17,16 +17,30 @@ public struct StudySession: Codable, Identifiable, Equatable {
     public var seconds: Double { intervals.reduce(0) { $0 + $1.seconds } }
 }
 public struct Ledger: Codable, Equatable {
-    public var schemaVersion = 1
+    public var schemaVersion = 2
     public var phase: StudyPhase = .stopped
     public var day: String
     public var checkpointAt: Date
     public var activeSessionID: UUID?
     public var sessions: [StudySession] = []
+    public var entries: [LearningEntry] = []
+    public var milestones: [HourlyMilestone] = []
+    enum CodingKeys: String, CodingKey { case schemaVersion, phase, day, checkpointAt, activeSessionID, sessions, entries, milestones }
+    public init(from decoder: Decoder) throws {
+        let c=try decoder.container(keyedBy:CodingKeys.self)
+        schemaVersion=try c.decode(Int.self,forKey:.schemaVersion)
+        phase=try c.decode(StudyPhase.self,forKey:.phase)
+        day=try c.decode(String.self,forKey:.day)
+        checkpointAt=try c.decode(Date.self,forKey:.checkpointAt)
+        activeSessionID=try c.decodeIfPresent(UUID.self,forKey:.activeSessionID)
+        sessions=try c.decode([StudySession].self,forKey:.sessions)
+        entries=try c.decode([LearningEntry].self,forKey:.entries)
+        milestones=try c.decode([HourlyMilestone].self,forKey:.milestones)
+    }
     public init(now: Date) { day = StudyDate.day(now); checkpointAt = now }
     public func total(on day: String) -> Double { sessions.filter { $0.day == day }.reduce(0) { $0 + $1.seconds } }
     public func validate() throws {
-        guard schemaVersion == 1 else { throw LedgerError.invalid("不支持的数据版本 \(schemaVersion)") }
+        guard schemaVersion == 2 else { throw LedgerError.invalid("不支持的数据版本 \(schemaVersion)") }
         guard checkpointAt.timeIntervalSince1970.isFinite, StudyDate.day(checkpointAt) == day else {
             throw LedgerError.invalid("检查点日期不一致")
         }
@@ -38,6 +52,7 @@ public struct Ledger: Codable, Equatable {
         if let active = open.first {
             guard active.day == day, active.endReason == nil else { throw LedgerError.invalid("活动学习段日期错误") }
         }
+        try validateRecords()
         for session in sessions {
             guard session.startedAt.timeIntervalSince1970.isFinite, StudyDate.day(session.startedAt) == session.day,
                   !session.intervals.isEmpty else { throw LedgerError.invalid("学习段日期或有效区间错误") }

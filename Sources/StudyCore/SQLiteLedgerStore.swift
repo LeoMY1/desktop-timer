@@ -16,7 +16,7 @@ public final class SQLiteLedgerStore: LedgerStore {
             guard override.hasPrefix("/"), !override.isEmpty else { throw LedgerError.invalid("STUDY_TIMER_DATA_DIR 必须是绝对路径") }
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("StudyTimer", isDirectory: true)
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("StudyTimerP4", isDirectory: true)
     }
     public init(directory: URL, now: Date) throws {
         self.directory = directory.standardizedFileURL.resolvingSymlinksInPath()
@@ -31,7 +31,7 @@ public final class SQLiteLedgerStore: LedgerStore {
             sqlite3_busy_timeout(db, 1500)
             if exists {
                 guard try scalar("PRAGMA quick_check") == "ok" else { throw LedgerError.invalid("数据库完整性检查失败，原文件已保留") }
-                guard try scalar("PRAGMA user_version") == "1" else { throw LedgerError.invalid("数据库版本未知，原文件已保留") }
+                guard try scalar("PRAGMA user_version") == "2" else { throw LedgerError.invalid("数据库版本未知，原文件已保留") }
                 _ = try load() // Validate before changing pragmas or writing anything.
             }
             try execute("PRAGMA journal_mode=WAL")
@@ -40,7 +40,7 @@ public final class SQLiteLedgerStore: LedgerStore {
                 try execute("BEGIN IMMEDIATE")
                 do {
                     try execute("CREATE TABLE ledger (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT NOT NULL)")
-                    try execute("PRAGMA user_version=1")
+                    try execute("PRAGMA user_version=2")
                     try writePayload(Ledger(now: now))
                     try execute("COMMIT")
                 } catch { try? execute("ROLLBACK"); throw error }
@@ -114,10 +114,11 @@ public final class StudyController {
     }
     public var ledger: Ledger { engine.ledger }
     public func tick() {
+        let previousMilestones=engine.ledger.milestones.count
         let previousDay = engine.ledger.day
         engine.advance(to: source.now)
         let dayChanged = engine.ledger.day != previousDay
-        if dayChanged || (engine.ledger.phase == .running && source.now.timeIntervalSince(lastCheckpointAttempt) >= 5) {
+        if dayChanged || previousMilestones != engine.ledger.milestones.count || (engine.ledger.phase == .running && source.now.timeIntervalSince(lastCheckpointAttempt) >= 5) {
             do { try checkpoint() } catch { /* Keep elapsed time in memory and expose failure for retry. */ }
         }
     }
@@ -142,6 +143,18 @@ public final class StudyController {
             try store.save(candidate.ledger)
             engine = candidate; lastSavedAt = candidate.ledger.checkpointAt; lastCheckpointAttempt = lastSavedAt; lastSaveError = nil
         } catch { lastSaveError = error.localizedDescription; throw error }
+    }
+    public func editNotes(_ notes:[UUID:String]) throws { try modify { try $0.editNotes(notes) } }
+    public func resolveTail(_ id:UUID,merge:Bool) throws { try modify { try $0.resolveTail(id,merge:merge) } }
+    public func markPresented(_ ids:Set<String>) throws { try modify { $0.markPresented(ids) } }
+    private func modify(_ operation:(inout TimerEngine)throws->Void) throws {
+        var candidate=engine
+        candidate.advance(to:source.now)
+        do {
+            try operation(&candidate)
+            try store.save(candidate.ledger)
+            engine=candidate;lastSavedAt=candidate.ledger.checkpointAt;lastCheckpointAttempt=lastSavedAt;lastSaveError=nil
+        } catch { lastSaveError=error.localizedDescription;throw error }
     }
     public enum Action { case start, pause, resume, stop, quit }
 }

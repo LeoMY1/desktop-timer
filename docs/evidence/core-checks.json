@@ -104,9 +104,89 @@
     {
       "name": "relative_data_override_rejected",
       "passed": true
+    },
+    {
+      "name": "daily_hour_across_25_and_35_sessions",
+      "passed": true
+    },
+    {
+      "name": "hourly_records_survive_multiple_missed_hours",
+      "passed": true
+    },
+    {
+      "name": "milestone_immediate_checkpoint_and_no_duplicate",
+      "passed": true
+    },
+    {
+      "name": "presentation_dedup_after_reopen",
+      "passed": true
+    },
+    {
+      "name": "unshown_reminders_remain_after_recovery",
+      "passed": true
+    },
+    {
+      "name": "note_edit_clear_and_restart",
+      "passed": true
+    },
+    {
+      "name": "editing_does_not_pause_timer",
+      "passed": true
+    },
+    {
+      "name": "new_hour_does_not_overwrite_prior_note",
+      "passed": true
+    },
+    {
+      "name": "90_tail_merge_plus_30_no_double_count",
+      "passed": true
+    },
+    {
+      "name": "tail_separate_preserves_duration",
+      "passed": true
+    },
+    {
+      "name": "tail_without_previous_rejects_cross_session_merge",
+      "passed": true
+    },
+    {
+      "name": "pending_tail_saved_before_choice",
+      "passed": true
+    },
+    {
+      "name": "automatic_midnight_tail_merges_within_day_only",
+      "passed": true
+    },
+    {
+      "name": "automatic_quit_tail_merges_and_keeps_note",
+      "passed": true
+    },
+    {
+      "name": "automatic_short_tail_creates_record",
+      "passed": true
+    },
+    {
+      "name": "failed_note_and_merge_preserve_saved_data",
+      "passed": true
+    },
+    {
+      "name": "failed_presentation_does_not_consume_reminder",
+      "passed": true
+    },
+    {
+      "name": "SQLite_notes_tails_and_milestones_roundtrip",
+      "passed": true
+    },
+    {
+      "name": "quit_resolves_unselected_manual_tails",
+      "passed": true
+    },
+    {
+      "name": "quit_unselected_short_tail_saved_separately",
+      "passed": true
     }
   ],
-  "stage": "P3",
+  "stage": "P4",
   "kind": "isolated clocks and SQLite",
   "notCovered": [
     "Actual system sleep",

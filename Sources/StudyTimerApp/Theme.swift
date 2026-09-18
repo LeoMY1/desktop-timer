@@ -20,6 +20,7 @@ enum PrototypeTheme {
 }
 
 struct DemoButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     var prominent = false
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -28,6 +29,6 @@ struct DemoButtonStyle: ButtonStyle {
             .foregroundColor(prominent ? Color.white : .primary)
             .background(prominent ? Color(red: 0.25, green: 0.50, blue: 0.46) : Color.primary.opacity(0.065))
             .cornerRadius(9)
-            .opacity(configuration.isPressed ? 0.73 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.73 : 1) : 0.4)
     }
 }

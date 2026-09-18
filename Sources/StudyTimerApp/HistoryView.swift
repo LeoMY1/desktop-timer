@@ -3,6 +3,8 @@ import StudyCore
 
 struct HistoryView: View {
     @ObservedObject var model: StudyModel
+    var showTail: (UUID)->Void
+    @State private var editingID: UUID?
     @State private var selectedDay: String?
     var day: String { selectedDay ?? model.ledger.day }
     var days: [String] { Array(Set(model.ledger.sessions.map(\.day) + [model.ledger.day])).sorted(by: >) }
@@ -61,14 +63,49 @@ struct HistoryView: View {
                             }.font(.system(size: 12)).foregroundColor(.secondary)
                             Text("有效学习 \(StudyDate.duration(session.seconds)) · 暂停时间不计入")
                                 .font(.system(size: 12)).foregroundColor(.secondary)
+                            ForEach(model.ledger.entries(for:session.id)) { entry in
+                                HStack(alignment:.top,spacing:8) {
+                                    VStack(alignment:.leading,spacing:5) {
+                                        Text(model.note(entry.id).isEmpty ? "未填写学习内容" : model.note(entry.id))
+                                            .font(.system(size:13)).foregroundColor(model.note(entry.id).isEmpty ? .secondary : .primary)
+                                            .fixedSize(horizontal:false,vertical:true)
+                                        if entry.pendingTail { Text("尾段待处理").font(.system(size:10)).foregroundColor(.orange) }
+                                    }
+                                    Spacer()
+                                    Text(StudyDate.duration(entry.seconds)).font(.system(size:12)).foregroundColor(.secondary)
+                                    Button { model.isEditingHistory=true;editingID=entry.id } label: {
+                                        Image(systemName:"pencil").frame(width:20,height:20).contentShape(Rectangle())
+                                    }.buttonStyle(.plain).accessibilityLabel("编辑学习内容")
+                                    if entry.pendingTail {
+                                        Button("处理"){showTail(entry.id)}.font(.system(size:11)).buttonStyle(.plain).foregroundColor(PrototypeTheme.accent)
+                                    }
+                                }.padding(10).background(PrototypeTheme.surface).cornerRadius(8)
+                            }
+                            let recorded=model.ledger.entries(for:session.id).last?.endOffset ?? 0
+                            if session.endedAt==nil && session.seconds-recorded>0.001 {
+                                HStack { Text("当前学习内容待整小时或停止后记录");Spacer();Text(StudyDate.duration(session.seconds-recorded)) }
+                                    .font(.system(size:11)).foregroundColor(.secondary)
+                            }
                         }.padding(16).background(Color.primary.opacity(0.025)).cornerRadius(10)
                     }
-                    Text("P3：已支持真实计时与保存；内容备注将在下一阶段接入。")
-                        .font(.system(size: 11)).foregroundColor(.secondary).padding(.top, 8)
+
                 }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
             }
-        }.background(PrototypeTheme.surface).frame(minWidth: 760, minHeight: 560)
+        }.background(PrototypeTheme.surface).frame(minWidth:760,minHeight:560)
+        .sheet(isPresented:Binding(get:{editingID != nil},set:{if !$0 {finishEditing()}})) {
+            if let id=editingID {
+                VStack(alignment:.leading,spacing:12) {
+                    Text("编辑学习内容").font(.system(size:18,weight:.semibold))
+                    Text("备注自动保存，可修改或清空；学习时长不变。").font(.system(size:12)).foregroundColor(.secondary)
+                    ClickToEditField(text:Binding(get:{model.note(id)},set:{model.setNote(id,$0)}),onEscape:finishEditing)
+                        .frame(height:150).overlay(RoundedRectangle(cornerRadius:8).stroke(PrototypeTheme.border))
+                    if let error=model.errorText {Text("保存失败："+error).font(.system(size:11)).foregroundColor(.red)}
+                    HStack { Spacer();Button("完成",action:finishEditing).keyboardShortcut(.defaultAction) }
+                }.padding(24).frame(width:420).interactiveDismissDisabled()
+            }
+        }
     }
+    func finishEditing() { if model.flushDrafts() {editingID=nil;model.isEditingHistory=false} }
     func status(_ session: StudySession) -> String {
         if session.endedAt == nil { return model.phase == .paused ? "已暂停" : "学习中" }
         switch session.endReason {

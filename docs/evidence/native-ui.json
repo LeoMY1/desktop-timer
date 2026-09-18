@@ -1,0 +1,9 @@
+{
+  "allPassed": true,
+  "checks": [
+    "native_start_and_60_minute_advance",
+    "Chinese_multiline_history_edit",
+    "menu_quit_persists_note",
+    "quit_tail_resolution"
+  ]
+}

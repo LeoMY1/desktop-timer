@@ -1,35 +1,30 @@
 # 桌面悬浮计时应用
 
-当前阶段：**P2 已通过；P3 v1 已交付，等待用户验收。P4 未开始。**
+**P4 v1 已交付，等待用户验收；P5 未开始。** 用户已授权进入 P4，确认真实睡眠和锁屏测试通过；自然跨午夜仍未实测。
 
-## 打开和使用
-双击 `outputs/P3-v1/StudyTimer.app`，或解压 `StudyTimer-P3-v1.zip` 后打开应用。请先退出旧 P2 原型以免混淆。
+## 打开
+双击 `outputs/P4-v1/StudyTimer.app`。先退出旧版本，以免混淆。新版从空白记录开始，旧 P3 测试数据不导入。
 
-P3 使用真实时间和本地 SQLite：开始、暂停/继续、停止、多段日累计、北京时间跨日、锁屏/睡眠继续累计、正常退出与异常恢复。启动不自动开始。记录图标打开真实日记录，菜单栏可恢复隐藏的窗口。
+已支持真实计时、日累计、北京时间归日、SQLite 保存，以及累计整小时无声鼓励、上方备注卡片、提醒合并与排队、历史备注编辑、尾段单独或合并。退出时自动处理尚未选择的尾段，并保留文字。
 
-- [P3 用户测试清单](docs/p3-testing.md)
-- [P3 自测结果与限制](docs/p3-self-test.md)
-- [阶段验收记录](docs/acceptance.md)
+- [P4 测试步骤](docs/p4-testing.md)
+- [P4 自测记录](docs/p4-self-test.md)
+- [阶段验收状态](docs/acceptance.md)
 
-备注、整小时鼓励和尾段合并将在 P4 接入；P3 停止直接保存时长。P2 文件留在历史版本目录，不与真实数据库混用。
+交付目录提供 `开始独立验收.command` 和 `继续上次验收.command`，可快进时间测试整小时/跨日，不改系统时间、不写正式库。日常使用直接打开应用即可。
 
-## 构建与验证
-本机 Apple Silicon / macOS 26.6.2 / Swift 5.8.1 / CLT SDK 13.3。最低部署目标 macOS 13，其他机型和系统版本尚未验证。无需第三方依赖。
+## 数据与构建
+正式数据位于 `~/Library/Application Support/StudyTimerP4`。备注约 0.4 秒自动保存，关键操作立即保存，运行时每 5 秒保存检查点。环境变量 STUDY_TIMER_DATA_DIR 支持绝对路径隔离测试。
 
 ```sh
-bash scripts/build-p3.sh release
-bash scripts/test-p3.sh
-bash scripts/test-process-p3.sh
-bash scripts/test-ui-p3.sh
+bash scripts/build-p4.sh release
+bash scripts/test-p4.sh
+bash scripts/test-ui-p4.sh
+bash scripts/open-p4-acceptance.sh
 ```
 
-当前 CLT 的 Swift Package 构建无法查询 SDK PlatformPath，因此交付脚本直接调用 `xcrun swiftc`，链接系统 SQLite，再生成本地签名的 .app。Package.swift 同时描述正式应用与保留的 P2 原型；`scripts/build.sh` 仍专供旧 P2。
+当前源码为 P4，旧阶段重建请使用当时已交付的源码包。当前构建通过 CLT 的 xcrun swiftc，使用系统 SQLite，无第三方库。目标 arm64 / macOS 13，仅当前 Mac 验证。本地 ad-hoc 签名，尚未公证发布。
 
-所有自动化数据使用 `work/p3-evidence` 下独立目录。默认正式数据目录为 `~/Library/Application Support/StudyTimer`；`STUDY_TIMER_DATA_DIR` 可指定绝对路径隔离数据。不要手工覆盖数据库及 WAL 文件。
-
-## 产品与设计
 [需求](docs/requirements.md) · [规格](docs/spec.md) · [阶段计划](docs/delivery-plan.md) · [开发规则](AGENTS.md)
 
 [浅色设计](design/p0/v3/01-overall-light.png) · [深色参考](design/p0/v1/02-states-dark.png)
-
-P3 保留已验收的悬浮、全区域拖动及 20×20 pt 顶部图标点击范围。所有下一阶段工作必须等用户明确验收与放行。
