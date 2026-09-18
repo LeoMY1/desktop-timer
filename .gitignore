@@ -1,0 +1,8 @@
+work/
+outputs/
+.build/
+.DS_Store
+*.sqlite3*
+*.db
+.env
+.env.*
