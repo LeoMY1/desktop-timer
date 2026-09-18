@@ -1,0 +1,11 @@
+{
+  "allPassed": true,
+  "checks": [
+    "normal_app_launch",
+    "start_pause_resume_stop",
+    "pause_database_unchanged",
+    "real_history_visible",
+    "menu_exit_saved_stopped"
+  ],
+  "kind": "Native UI actions with isolated real-time database"
+}

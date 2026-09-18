@@ -1,0 +1,47 @@
+{
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "initial_stopped",
+      "passed": true
+    },
+    {
+      "name": "real_model_drives_HH_MM",
+      "passed": true
+    },
+    {
+      "name": "pause_excludes_elapsed",
+      "passed": true
+    },
+    {
+      "name": "midnight_current_day_resets",
+      "passed": true
+    },
+    {
+      "name": "midnight_previous_day_saved",
+      "passed": true
+    },
+    {
+      "name": "hidden_window_keeps_accruing",
+      "passed": true
+    },
+    {
+      "name": "stop_keeps_total",
+      "passed": true
+    },
+    {
+      "name": "new_session_retains_daily_total",
+      "passed": true
+    },
+    {
+      "name": "nonactivating_timer",
+      "passed": true
+    },
+    {
+      "name": "floating_all_spaces",
+      "passed": true
+    }
+  ],
+  "stage": "P3",
+  "kind": "AppKit integration using isolated clock and SQLite"
+}

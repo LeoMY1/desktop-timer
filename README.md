@@ -1,35 +1,35 @@
 # 桌面悬浮计时应用
 
-面向日常学习的本地 Mac 计时器。当前已交付 **P2 原生交互原型 v3，等待用户测试验收**。用户于 2026-09-18 明确要求“按照文档，完成P2开发”；P3 尚未获准。
+当前阶段：**P2 已通过；P3 v1 已交付，等待用户验收。P4 未开始。**
 
-## 运行与验收
-双击 `outputs/P2-v3/StudyTimer-P2.app`。仅支持本次构建的 Apple Silicon Mac。
+## 打开和使用
+双击 `outputs/P3-v1/StudyTimer.app`，或解压 `StudyTimer-P3-v1.zip` 后打开应用。请先退出旧 P2 原型以免混淆。
 
-这是窗口交互原型：时间、日期和历史均为固定演示数据，不会真实计时；文字只保留在本次运行。仅窗口位置保存到独立 P2 偏好设置，不创建学习数据库。
+P3 使用真实时间和本地 SQLite：开始、暂停/继续、停止、多段日累计、北京时间跨日、锁屏/睡眠继续累计、正常退出与异常恢复。启动不自动开始。记录图标打开真实日记录，菜单栏可恢复隐藏的窗口。
 
-- [P2 用户测试清单](docs/p2-testing.md)：如何运行、触发卡片和逐项测试。
-- [P2 自测记录](docs/p2-self-test.md)：已测范围、证据与未测项。
-- [当前验收状态](docs/acceptance.md)：内部检查与用户验收分开记录。
+- [P3 用户测试清单](docs/p3-testing.md)
+- [P3 自测结果与限制](docs/p3-self-test.md)
+- [阶段验收记录](docs/acceptance.md)
 
-## 构建
-当前机器只有 Command Line Tools，使用不依赖完整 Xcode 的脚本：
+备注、整小时鼓励和尾段合并将在 P4 接入；P3 停止直接保存时长。P2 文件留在历史版本目录，不与真实数据库混用。
+
+## 构建与验证
+本机 Apple Silicon / macOS 26.6.2 / Swift 5.8.1 / CLT SDK 13.3。最低部署目标 macOS 13，其他机型和系统版本尚未验证。无需第三方依赖。
 
 ```sh
-bash scripts/build.sh release
-bash scripts/test.sh
-./outputs/P2-v3/StudyTimer-P2.app/Contents/MacOS/StudyTimerPrototype --self-check "$PWD/work/p2-evidence/local"
+bash scripts/build-p3.sh release
+bash scripts/test-p3.sh
+bash scripts/test-process-p3.sh
+bash scripts/test-ui-p3.sh
 ```
 
-构建目标为 arm64 / macOS 13，无第三方依赖。`Package.swift` 保留工程结构；当前 CLT 环境的 `swift build` 无法查询 SDK PlatformPath，因此本机交付采用 `xcrun swiftc`。测试是独立 Swift 检查程序，不依赖 XCTest。
+当前 CLT 的 Swift Package 构建无法查询 SDK PlatformPath，因此交付脚本直接调用 `xcrun swiftc`，链接系统 SQLite，再生成本地签名的 .app。Package.swift 同时描述正式应用与保留的 P2 原型；`scripts/build.sh` 仍专供旧 P2。
 
-## 产品文档
-- [需求文档](docs/requirements.md)
-- [技术规格](docs/spec.md)
-- [分阶段交付计划](docs/delivery-plan.md)
-- [开发协作规则](AGENTS.md)
+所有自动化数据使用 `work/p3-evidence` 下独立目录。默认正式数据目录为 `~/Library/Application Support/StudyTimer`；`STUDY_TIMER_DATA_DIR` 可指定绝对路径隔离数据。不要手工覆盖数据库及 WAL 文件。
 
-## 设计参考
-- [浅色最新稿](design/p0/v3/01-overall-light.png)
-- [深色与状态参考](design/p0/v1/02-states-dark.png)
+## 产品与设计
+[需求](docs/requirements.md) · [规格](docs/spec.md) · [阶段计划](docs/delivery-plan.md) · [开发规则](AGENTS.md)
 
-P2 已采用卡片在上、顶部避让、历史中文时长和隐藏时区标签的修订。主窗为 288×176 pt，额外高度用于明确显示原型提示。下一阶段必须等用户验收 P2 并明确允许继续。
+[浅色设计](design/p0/v3/01-overall-light.png) · [深色参考](design/p0/v1/02-states-dark.png)
+
+P3 保留已验收的悬浮、全区域拖动及 20×20 pt 顶部图标点击范围。所有下一阶段工作必须等用户明确验收与放行。

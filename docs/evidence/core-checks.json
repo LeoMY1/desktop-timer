@@ -1,0 +1,116 @@
+{
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "launch_is_stopped_and_empty",
+      "passed": true
+    },
+    {
+      "name": "25_plus_35_minutes_same_session_pause_excluded",
+      "passed": true
+    },
+    {
+      "name": "90_plus_30_minutes_independent_sessions",
+      "passed": true
+    },
+    {
+      "name": "midnight_2340_to_0020",
+      "passed": true
+    },
+    {
+      "name": "exact_midnight_new_day_zero_running",
+      "passed": true
+    },
+    {
+      "name": "paused_midnight_stays_paused_resume_new_session",
+      "passed": true
+    },
+    {
+      "name": "stopped_midnight_does_not_start",
+      "passed": true
+    },
+    {
+      "name": "missed_callbacks_catch_up_two_hour_sleep_simulation",
+      "passed": true
+    },
+    {
+      "name": "multi_day_sleep_simulation",
+      "passed": true
+    },
+    {
+      "name": "normal_quit_no_closed_interval_accrual",
+      "passed": true
+    },
+    {
+      "name": "abnormal_recovery_saved_snapshot_only",
+      "passed": true
+    },
+    {
+      "name": "checkpoint_five_second_cadence",
+      "passed": true
+    },
+    {
+      "name": "critical_actions_save_immediately",
+      "passed": true
+    },
+    {
+      "name": "failed_pause_keeps_running_and_retry_retains_time",
+      "passed": true
+    },
+    {
+      "name": "failed_checkpoint_keeps_memory_and_last_good_snapshot",
+      "passed": true
+    },
+    {
+      "name": "failed_quit_does_not_stop_live_engine",
+      "passed": true
+    },
+    {
+      "name": "fractional_seconds_not_rounded_per_tick",
+      "passed": true
+    },
+    {
+      "name": "beijing_day_independent_of_host_timezone",
+      "passed": true
+    },
+    {
+      "name": "display_HH_MM_and_chinese_duration",
+      "passed": true
+    },
+    {
+      "name": "sqlite_roundtrip_and_reopen",
+      "passed": true
+    },
+    {
+      "name": "second_writer_rejected",
+      "passed": true
+    },
+    {
+      "name": "corrupt_file_preserved",
+      "passed": true
+    },
+    {
+      "name": "unknown_sqlite_version_preserved",
+      "passed": true
+    },
+    {
+      "name": "invalid_payload_preserved",
+      "passed": true
+    },
+    {
+      "name": "invalid_ledger_cannot_replace_good_snapshot",
+      "passed": true
+    },
+    {
+      "name": "relative_data_override_rejected",
+      "passed": true
+    }
+  ],
+  "stage": "P3",
+  "kind": "isolated clocks and SQLite",
+  "notCovered": [
+    "Actual system sleep",
+    "Actual overnight midnight",
+    "UI window behavior"
+  ]
+}
