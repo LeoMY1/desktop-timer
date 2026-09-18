@@ -1,0 +1,25 @@
+{
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "--acceptance-mode rejected before opening data",
+      "passed": true
+    },
+    {
+      "name": "--ui-check rejected before opening data",
+      "passed": true
+    },
+    {
+      "name": "No simulation/check entrypoints",
+      "passed": true
+    },
+    {
+      "name": "Stable data identity",
+      "passed": true
+    },
+    {
+      "name": "Local signature valid",
+      "passed": true
+    }
+  ]
+}

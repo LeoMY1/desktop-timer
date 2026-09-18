@@ -22,7 +22,7 @@ func expect(_ condition: @autoclosure () throws -> Bool, _ text: String = "Asser
     if try !condition() { throw LedgerError.invalid(text) }
 }
 func near(_ a: Double, _ b: Double) -> Bool { abs(a-b) < 0.001 }
-let root = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "work/p3-evidence/core", isDirectory: true)
+let root = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "work/evidence/core", isDirectory: true)
 try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
 let scratch = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
 try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
@@ -335,9 +335,9 @@ test("midnight_paused_preserves_all_prior_totals") {
  try expect(c.ledger.total(on:"2026-09-18")==total && c.ledger.total(on:"2026-09-19")==0 && c.ledger.phase == .paused)
 }
 let passed=checks.filter { $0["passed"] as? Bool == true }.count
-let report:[String:Any] = ["stage":"P4", "kind":"isolated clocks and SQLite", "checks":checks, "allPassed":passed==checks.count,
+let report:[String:Any] = ["stage":"current", "kind":"isolated clocks and SQLite", "checks":checks, "allPassed":passed==checks.count,
  "notCovered":["Actual system sleep", "Actual overnight midnight", "UI window behavior"]]
 try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:root.appendingPathComponent("core-checks.json"))
-print("P4 core checks: \(passed)/\(checks.count)")
+print("Core checks: \(passed)/\(checks.count)")
 for c in checks where c["passed"] as? Bool == false { print(c) }
 if passed != checks.count { exit(1) }

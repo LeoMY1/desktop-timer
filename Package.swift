@@ -11,7 +11,6 @@ let package = Package(
         .target(name: "StudyCore", dependencies: ["CSQLite"]),
         .executableTarget(name: "StudyTimerApp", dependencies: ["StudyCore", "WindowGeometry"]),
         .executableTarget(name: "RecordChecks", dependencies: ["StudyCore", "CSQLite"], path: "Tests/StudyRecordChecks"),
-        .executableTarget(name: "CoreChecks", dependencies: ["StudyCore", "CSQLite"], path: "Tests/StudyCoreChecks"),
         .executableTarget(name: "ProcessProbe", dependencies: ["StudyCore"], path: "Tests/StudyProcessProbe"),
         .executableTarget(name: "GeometryChecks", dependencies: ["WindowGeometry"], path: "Tests/WindowGeometryChecks")
     ]

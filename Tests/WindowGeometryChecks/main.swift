@@ -59,7 +59,7 @@ for (name, test) in cases {
     catch { results.append(["name": name, "passed": false, "error": String(describing: error)]) }
 }
 let allPassed = results.allSatisfy { $0["passed"] as? Bool == true }
-let report: [String: Any] = ["stage": "P2", "kind": "pure geometry checks", "allPassed": allPassed, "checks": results]
+let report: [String: Any] = ["stage": "current", "kind": "pure geometry checks", "allPassed": allPassed, "checks": results]
 let json = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
 if CommandLine.arguments.count > 1 {
     let output = URL(fileURLWithPath: CommandLine.arguments[1])

@@ -178,6 +178,5 @@
       "passed": true
     }
   ],
-  "stage": "P5",
   "kind": "AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds"
 }

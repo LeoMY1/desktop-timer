@@ -1,0 +1,68 @@
+[
+  {
+    "stage": "P0-v1",
+    "commit": "cd01513f7ea9f74e43e0b04797e3a7827d9b58df",
+    "source": "design/p0/v1",
+    "sha256": null
+  },
+  {
+    "stage": "P0-v2",
+    "commit": "621f44ec4ea7d9e67a4189ec410a464d9b8e38d4",
+    "source": "design/p0/v2",
+    "sha256": null
+  },
+  {
+    "stage": "P0-v3",
+    "commit": "12783e9ad8e2ab987504d8f2729df88c2ae84a62",
+    "source": "design/p0/v3",
+    "sha256": null
+  },
+  {
+    "stage": "P1",
+    "commit": "7154d3a9ea72271e2884ff45731d10f81b8ecaba",
+    "source": "P1-文档审查-v1.zip",
+    "sha256": "feda6e7227c5db9354ddd45d52ac571b6da5c813267d37f5712f3b877487282b"
+  },
+  {
+    "stage": "P2-v1",
+    "commit": "24d1669f2a029c409ea20285eb504b96064bbbe9",
+    "source": "StudyTimer-P2-source-v1.zip",
+    "sha256": "bc979a5cb43a5a0ad6e22b1e09b6fe1d2574025a035b7ca8e0d8383000a4e1ff"
+  },
+  {
+    "stage": "P2-v2",
+    "commit": "e09b68dcaa909299a7498bf07eef6c7661268538",
+    "source": "StudyTimer-P2-source-v2.zip",
+    "sha256": "90bc4b8a8a6501e2a65cd1afb0173849903df8b3b8d7e2d5ba1a1c1028d9e4f6"
+  },
+  {
+    "stage": "P2-v3",
+    "commit": "5adf8518a9ca357fefbaf941b58a95338bb18acf",
+    "source": "StudyTimer-P2-source-v3.zip",
+    "sha256": "7da7cbfce2f2779c349cbbdd8ed2f3e164ccb8e4c0e5a59273b6eb083497010f"
+  },
+  {
+    "stage": "P3-v1",
+    "commit": "f649dcf99eb9ce3492bd6ff6531486473ee0a535",
+    "source": "StudyTimer-P3-source-v1.zip",
+    "sha256": "8422fa5175b32bf98bded43e7505db7764d373e5c0b180584c47602d070d265c"
+  },
+  {
+    "stage": "P4-v1",
+    "commit": "6ceabf55dc4c23c16221869dff46a02bea95303d",
+    "source": "StudyTimer-P4-source-v1.zip",
+    "sha256": "6f959c47591399122f2e8e56383fed348cb9a3f9e92a3671b86e55e5acb5fa65"
+  },
+  {
+    "stage": "P4-v2",
+    "commit": "b36f5ff9ba07367481b456f9010c416bb52cc225",
+    "source": "StudyTimer-P4-source-v2.zip",
+    "sha256": "c4af417c1b9d3a74c2a06fb5922c9cfd53bed9965e9fb003b8398157205f8f9d"
+  },
+  {
+    "stage": "P5-v1",
+    "commit": "3092ce0ca98532528ec402155262eda100728c9e",
+    "source": "StudyTimer-1.0.0-source.zip",
+    "sha256": "572ac28e37881947266aef4bf2514661094d13984caf96d3b2da55ec6bfe39e2"
+  }
+]

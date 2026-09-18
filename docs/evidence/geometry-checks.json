@@ -30,6 +30,5 @@
       "passed": true
     }
   ],
-  "stage": "P2",
   "kind": "pure geometry checks"
 }

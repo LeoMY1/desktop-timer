@@ -2,14 +2,14 @@
 set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$project_root"
-if [ ! -f work/p3-build/tests/StudyCore.o ]; then bash scripts/test-p3.sh; fi
-xcrun swiftc -target arm64-apple-macosx13.0 -I Sources/CSQLite -I work/p3-build/tests Tests/StudyProcessProbe/main.swift work/p3-build/tests/StudyCore.o -o work/p3-build/tests/ProcessProbe
+if [ ! -f work/build/release/StudyCore.o ]; then bash scripts/build.sh release; fi
+xcrun swiftc -target arm64-apple-macosx13.0 -I Sources/CSQLite -I work/build/release Tests/StudyProcessProbe/main.swift work/build/release/StudyCore.o -o work/build/release/ProcessProbe
 python3 - <<'PY'
 from pathlib import Path
 import subprocess,json,uuid,time
-root=Path.cwd(); out=root/'work/p3-evidence/process'; out.mkdir(parents=True,exist_ok=True)
+root=Path.cwd(); out=root/'work/evidence/process'; out.mkdir(parents=True,exist_ok=True)
 run=out/str(uuid.uuid4()); run.mkdir()
-probe=root/'work/p3-build/tests/ProcessProbe'
+probe=root/'work/build/release/ProcessProbe'
 live=subprocess.Popen([str(probe),'live',str(run/'normal-data'),str(out/'live-time.json')])
 crash=subprocess.run([str(probe),'crash',str(run/'crash-data'),str(out/'before-crash.json')])
 time.sleep(1)

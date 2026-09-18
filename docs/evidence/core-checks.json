@@ -206,7 +206,6 @@
       "passed": true
     }
   ],
-  "stage": "P4",
   "kind": "isolated clocks and SQLite",
   "notCovered": [
     "Actual system sleep",

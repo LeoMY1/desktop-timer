@@ -4,5 +4,9 @@ outputs/
 .DS_Store
 *.sqlite3*
 *.db
+writer.lock
 .env
 .env.*
+!.env.example
+*.app/
+*.zip

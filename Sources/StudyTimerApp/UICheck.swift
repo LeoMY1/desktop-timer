@@ -122,16 +122,16 @@ extension AppDelegate {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 30.4) {
                 check("celebration_ends_at_30_seconds", !effect.celebration)
-                let report:[String:Any]=["stage":"P5","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
+                let report:[String:Any]=["stage":"current","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
                     "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
                 do {
                     try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent("ui-checks.json"))
-                    print("P4 UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
-                } catch { fputs("P4 UI report failed: \(error)\n", stderr) }
+                    print("UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
+                } catch { fputs("UI report failed: \(error)\n", stderr) }
                 NSApp.terminate(nil)
             }
             return
-        } catch {fputs("P4 UI check failed: \(error)\n",stderr)}
+        } catch {fputs("UI check failed: \(error)\n",stderr)}
         NSApp.terminate(nil)
     }
 }
