@@ -29,10 +29,18 @@ struct TimerView: View {
                 Spacer(minLength: 2)
                 Circle().fill(model.phase == .running ? PrototypeTheme.accent : model.phase == .paused ? .orange.opacity(0.7) : .gray.opacity(0.65)).frame(width: 6, height: 6)
                 Text(model.phase.title).font(.system(size: 11)).foregroundColor(.secondary)
-                Button(action: history) { Image(systemName: "text.badge.plus").frame(width: 20, height: 20) }
+                Button(action: history) {
+                    Image(systemName: "text.badge.plus")
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
+                }
                     .buttonStyle(.plain).foregroundColor(.secondary).help("查看学习记录（演示数据）").accessibilityLabel("查看学习记录")
                     .timerControl()
-                Button(action: showMenu) { Image(systemName: "ellipsis").frame(width: 16, height: 20) }
+                Button(action: showMenu) {
+                    Image(systemName: "ellipsis")
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
+                }
                     .buttonStyle(.plain).foregroundColor(.secondary).help("原型演示与设置").accessibilityLabel("原型演示菜单")
                     .timerControl()
             }
