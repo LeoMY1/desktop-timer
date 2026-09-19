@@ -7,6 +7,54 @@ final class UICheckClock: TimeSource {
     func add(_ seconds:Double) {now=now.addingTimeInterval(seconds)}
 }
 extension AppDelegate {
+    func runDeletionUICheck(_ check: @escaping (String, Bool) -> Void, completion: @escaping () -> Void) {
+        guard let clock = model.source as? UICheckClock else { completion(); return }
+        closeNote(); tailQueue.removeAll()
+        _ = model.perform(.start); clock.add(3600); tick()
+        let targetID = model.ledger.entries.last!.id
+        let target = RecordDeletion.entry(targetID)
+        let otherID = model.ledger.entries.first!.id
+        model.setNote(targetID, "将删除的草稿")
+        model.setNote(otherID, "保留的未提交草稿")
+        let before = model.ledger
+        openHistory(); requestDeletion(target)
+        check("delete_confirmation_visible_without_pausing", historyWindow?.attachedSheet != nil && model.phase == .running)
+        guard let firstSheet = historyWindow?.attachedSheet else { completion(); return }
+        historyWindow?.endSheet(firstSheet, returnCode: .alertFirstButtonReturn)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            check("delete_cancel_keeps_records_and_running", self.model.phase == .running && self.model.ledger.sessions == before.sessions && self.model.ledger.entries.map(\.id) == before.entries.map(\.id) && !self.model.isEditingHistory)
+            self.requestDeletion(target)
+            guard let secondSheet = self.historyWindow?.attachedSheet else {
+                check("delete_second_confirmation_visible", false); completion(); return
+            }
+            self.historyWindow?.endSheet(secondSheet, returnCode: .alertSecondButtonReturn)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                check("delete_confirmation_pauses_and_deducts", self.model.phase == .paused && !self.model.ledger.entries.contains { $0.id == targetID } && self.model.ledger.total(on: before.day) == before.total(on: before.day) - before.entries.first { $0.id == targetID }!.seconds)
+                check("delete_updates_display_and_menu", self.model.displayTime == StudyDate.timer(self.model.ledger.total(on: before.day)) && self.primaryItem.title == "继续学习")
+                check("delete_preserves_other_draft_and_clears_deleted_draft", self.model.note(otherID) == "保留的未提交草稿" && self.model.drafts[targetID] == nil && !self.model.hasUnsavedNotes)
+                check("delete_closes_stale_card_and_restores_position", !self.notePanel.isVisible && self.model.cardEntryIDs.isEmpty && self.restoreFrame == nil)
+                check("delete_creates_no_new_pending_tail", Set(self.model.ledger.entries.filter { $0.pendingTail }.map(\.id)).isSubset(of: Set(before.entries.filter { $0.pendingTail }.map(\.id))))
+                self.primaryAction()
+                check("delete_continue_resumes", self.model.phase == .running)
+                let active = self.model.ledger.activeSessionID!
+                check("delete_active_whole_session_succeeds", self.deleteRecord(.session(active)))
+                check("delete_active_whole_keeps_paused", self.model.phase == .paused && self.model.ledger.activeSessionID == nil)
+                self.primaryAction()
+                check("delete_whole_continue_creates_new_session", self.model.phase == .running && self.model.ledger.activeSessionID != active)
+                clock.add(120); self.tick(); _ = self.model.perform(.stop); self.closeNote()
+                let historical = self.model.ledger.sessions.last!.id
+                clock.add(86400); _ = self.model.perform(.start); clock.add(3600); self.tick()
+                let card = self.model.currentEntry?.id
+                if let card = card { self.model.setNote(card, "当天卡片草稿") }
+                let currentSession = self.model.ledger.activeSessionID
+                check("delete_historical_session_succeeds", self.deleteRecord(.session(historical)))
+                check("delete_historical_preserves_running_card_and_draft", self.model.phase == .running && self.model.ledger.activeSessionID == currentSession && card != nil && self.model.currentEntry?.id == card && self.notePanel.isVisible && self.model.note(card!) == "当天卡片草稿")
+                self.closeNote()
+                completion()
+            }
+        }
+    }
+
     func runUICheck() {
         guard let index=CommandLine.arguments.firstIndex(of:"--ui-check"),CommandLine.arguments.count>index+1,
               let clock=model.source as? UICheckClock else {exit(2)}
@@ -122,6 +170,7 @@ extension AppDelegate {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 30.4) {
                 check("celebration_ends_at_30_seconds", !effect.celebration)
+                self.runDeletionUICheck(check) {
                 let report:[String:Any]=["stage":"current","kind":"AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds","checks":checks,
                     "allPassed":checks.allSatisfy{$0["passed"] as? Bool==true}]
                 do {
@@ -129,6 +178,7 @@ extension AppDelegate {
                     print("UI checks: \(checks.filter{$0["passed"] as? Bool==true}.count)/\(checks.count)")
                 } catch { fputs("UI report failed: \(error)\n", stderr) }
                 NSApp.terminate(nil)
+                }
             }
             return
         } catch {fputs("UI check failed: \(error)\n",stderr)}

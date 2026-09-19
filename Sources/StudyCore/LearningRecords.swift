@@ -1,5 +1,10 @@
 import Foundation
 
+public enum RecordDeletion: Equatable {
+    case session(UUID)
+    case entry(UUID)
+}
+
 public struct LearningEntry: Codable, Identifiable, Equatable {
     public let id: UUID
     public let sessionID: UUID
@@ -19,6 +24,14 @@ public struct HourlyMilestone: Codable, Identifiable, Equatable {
 }
 
 extension Ledger {
+    public func session(for deletion: RecordDeletion) -> StudySession? {
+        switch deletion {
+        case .session(let id): return sessions.first { $0.id == id }
+        case .entry(let id):
+            guard let entry = entries.first(where: { $0.id == id }) else { return nil }
+            return sessions.first { $0.id == entry.sessionID }
+        }
+    }
     public func entries(for sessionID: UUID) -> [LearningEntry] {
         entries.filter { $0.sessionID == sessionID }.sorted { $0.startOffset < $1.startOffset }
     }

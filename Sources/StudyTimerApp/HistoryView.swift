@@ -4,6 +4,7 @@ import StudyCore
 struct HistoryView: View {
     @ObservedObject var model: StudyModel
     var showTail: (UUID)->Void
+    var deleteRecord: (RecordDeletion)->Void
     @State private var editingID: UUID?
     @State private var selectedDay: String?
     var day: String { selectedDay ?? model.ledger.day }
@@ -56,6 +57,7 @@ struct HistoryView: View {
                                 Text("学习段 \(index + 1)").font(.system(size: 16, weight: .semibold))
                                 Spacer()
                                 Text(StudyDate.duration(session.seconds)).font(.system(size: 13, weight: .medium)).foregroundColor(PrototypeTheme.accent)
+                                deleteButton(.session(session.id), label: "删除学习段")
                             }
                             HStack(spacing: 14) {
                                 Text(StudyDate.clock(session.startedAt) + "–" + (session.endedAt.map { StudyDate.clock($0) } ?? "至今"))
@@ -76,6 +78,7 @@ struct HistoryView: View {
                                     Button { model.isEditingHistory=true;editingID=entry.id } label: {
                                         Image(systemName:"pencil").frame(width:20,height:20).contentShape(Rectangle())
                                     }.buttonStyle(.plain).accessibilityLabel("编辑学习内容")
+                                    deleteButton(.entry(entry.id), label: "删除内容记录")
                                     if entry.pendingTail {
                                         Button("处理"){showTail(entry.id)}.font(.system(size:11)).buttonStyle(.plain).foregroundColor(PrototypeTheme.accent)
                                     }
@@ -104,6 +107,12 @@ struct HistoryView: View {
                 }.padding(24).frame(width:420).interactiveDismissDisabled()
             }
         }
+    }
+    func deleteButton(_ target: RecordDeletion, label: String) -> some View {
+        Button { deleteRecord(target) } label: {
+            Image(systemName: "trash").frame(width: 24, height: 24).contentShape(Rectangle())
+        }.buttonStyle(.plain).foregroundColor(.secondary).help(label).accessibilityLabel(label)
+            .disabled(!model.ready || model.isEditingHistory)
     }
     func finishEditing() { if model.flushDrafts() {editingID=nil;model.isEditingHistory=false} }
     func status(_ session: StudySession) -> String {

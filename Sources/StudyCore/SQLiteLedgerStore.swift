@@ -146,6 +146,12 @@ public final class StudyController {
     }
     public func editNotes(_ notes:[UUID:String]) throws { try modify { try $0.editNotes(notes) } }
     public func resolveTail(_ id:UUID,merge:Bool) throws { try modify { try $0.resolveTail(id,merge:merge) } }
+    public func deleteRecord(_ target: RecordDeletion, notes: [UUID:String] = [:]) throws {
+        try modify {
+            try $0.editNotes(notes)
+            try $0.deleteRecord(target)
+        }
+    }
     public func markPresented(_ ids:Set<String>) throws { try modify { $0.markPresented(ids) } }
     private func modify(_ operation:(inout TimerEngine)throws->Void) throws {
         var candidate=engine

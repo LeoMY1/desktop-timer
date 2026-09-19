@@ -190,9 +190,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.title="学习记录"; window.identifier=NSUserInterfaceItemIdentifier("study-history")
             window.minSize=NSSize(width:760,height:590); window.isReleasedWhenClosed=false
             window.titlebarAppearsTransparent=true
-            window.contentView=NSHostingView(rootView:HistoryView(model:model,showTail:{[weak self] id in self?.showTail(id)})); window.center(); historyWindow=window
+            window.contentView=NSHostingView(rootView:HistoryView(model:model,showTail:{[weak self] id in self?.showTail(id)},deleteRecord:{[weak self] target in self?.requestDeletion(target)})); window.center(); historyWindow=window
         }
         historyWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
+    }
+    func requestDeletion(_ target: RecordDeletion) {
+        guard let window = historyWindow, !model.isEditingHistory else { return }
+        model.tick()
+        guard let session = model.ledger.session(for: target) else { return }
+        let title: String
+        let seconds: Double
+        switch target {
+        case .session:
+            title = "删除这个学习段？"; seconds = session.seconds
+        case .entry(let id):
+            guard let entry = model.ledger.entries.first(where: { $0.id == id }) else { return }
+            title = "删除这条内容记录？"; seconds = entry.seconds
+        }
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = "日期：\(session.day)\n当前有效时长：\(StudyDate.duration(seconds))\n将删除所选记录及其备注，并扣除对应时长。删除后无法撤销。\n" +
+            "若确认时该记录属于今天，正在进行的计时会暂停，可手动继续；删除其他日期不影响当前计时。" +
+            (session.endedAt == nil ? "\n该段尚未结束，确认时按最新记录结算并删除。" : "")
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "删除")
+        alert.buttons[1].hasDestructiveAction = true
+        model.isEditingHistory = true
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard let self = self else { return }
+            if response == .alertSecondButtonReturn { self.deleteRecord(target) }
+            self.model.isEditingHistory = false
+        }
+    }
+    @discardableResult func deleteRecord(_ target: RecordDeletion) -> Bool {
+        guard model.deleteRecord(target) else { updateMenu(); return false }
+        let liveIDs = Set(model.ledger.entries.filter { $0.pendingTail }.map(\.id))
+        tailQueue.removeAll { !liveIDs.contains($0) }
+        if notePanel.isVisible && model.cardEntryIDs.isEmpty { closeNote() }
+        updateMenu()
+        return true
     }
     #if INTERNAL_TESTING
     @objc func setAppearance(_ sender:NSMenuItem) {

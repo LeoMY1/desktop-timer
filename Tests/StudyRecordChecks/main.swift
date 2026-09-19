@@ -334,6 +334,209 @@ test("midnight_paused_preserves_all_prior_totals") {
  t.now=ISO8601DateFormatter().date(from:"2026-09-19T00:20:00+08:00")!;c.tick()
  try expect(c.ledger.total(on:"2026-09-18")==total && c.ledger.total(on:"2026-09-19")==0 && c.ledger.phase == .paused)
 }
+// Deletion regressions use only isolated clocks/stores.
+test("delete_closed_session_updates_total_and_preserves_other_session") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(1500);try c.perform(.stop)
+ let removed=c.ledger.sessions[0].id
+ try c.perform(.start);t.add(2100);try c.perform(.stop)
+ let kept=c.ledger.sessions[1];let entry=c.ledger.entries.last!
+ try c.editNotes([entry.id:"保留备注"]);try c.deleteRecord(.session(removed))
+ try expect(c.ledger.sessions == [kept] && c.ledger.entries.count==1 && c.ledger.entries[0].note=="保留备注")
+ try expect(c.ledger.total(on:c.ledger.day)==2100 && c.ledger.phase == .stopped && c.ledger.milestones.isEmpty)
+ try c.ledger.validate()
+}
+test("delete_yesterday_session_keeps_today_running_and_reminders") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(4000);try c.perform(.stop)
+ let old=c.ledger.sessions[0].id
+ t.add(86400);try c.perform(.start);t.add(3600);c.tick()
+ let active=c.ledger.activeSessionID;let milestones=c.ledger.milestones.filter{$0.day==c.ledger.day}
+ t.add(17);try c.deleteRecord(.session(old))
+ try expect(c.ledger.phase == .running && c.ledger.activeSessionID==active && c.ledger.total(on:c.ledger.day)==3617)
+ try expect(c.ledger.milestones==milestones && c.ledger.total(on:"2026-09-18")==0)
+ t.add(3);c.tick();try expect(c.ledger.total(on:c.ledger.day)==3620);try c.ledger.validate()
+}
+test("delete_yesterday_entry_keeps_active_timer_and_today_card_eligible") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(7200);try c.perform(.stop)
+ let old=c.ledger.entries[0].id
+ t.add(86400);try c.perform(.start);t.add(3600);c.tick()
+ let pending=ReminderCoordinator.pending(in:c.ledger).filter{$0.day==c.ledger.day}
+ try c.deleteRecord(.entry(old))
+ try expect(c.ledger.phase == .running && c.ledger.total(on:"2026-09-18")==3600)
+ try expect(ReminderCoordinator.pending(in:c.ledger)==pending);try c.ledger.validate()
+}
+test("delete_today_closed_session_pauses_active_without_creating_tail") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(100);try c.perform(.stop)
+ let old=c.ledger.sessions[0].id
+ try c.perform(.start);let active=c.ledger.activeSessionID;t.add(321)
+ try c.deleteRecord(.session(old))
+ try expect(c.ledger.phase == .paused && c.ledger.activeSessionID==active && c.ledger.total(on:c.ledger.day)==321)
+ try expect(c.ledger.entries.isEmpty && c.ledger.sessions[0].endedAt==nil)
+ t.add(600);c.tick();try expect(c.ledger.total(on:c.ledger.day)==321)
+ try c.perform(.resume);t.add(9);c.tick();try expect(c.ledger.total(on:c.ledger.day)==330);try c.ledger.validate()
+}
+test("delete_active_session_paused_without_session_resume_creates_new") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(3610)
+ let old=c.ledger.activeSessionID!;try c.deleteRecord(.session(old))
+ try expect(c.ledger.phase == .paused && c.ledger.activeSessionID==nil && c.ledger.sessions.isEmpty && c.ledger.entries.isEmpty && c.ledger.milestones.isEmpty)
+ t.add(500);c.tick();try expect(c.ledger.total(on:c.ledger.day)==0)
+ try c.perform(.resume);try expect(c.ledger.activeSessionID != old && c.ledger.sessions[0].startedAt==t.now)
+ t.add(5);c.tick();try expect(c.ledger.total(on:c.ledger.day)==5);try c.ledger.validate()
+}
+test("delete_already_paused_active_session_stays_paused") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(120);try c.perform(.pause)
+ try c.deleteRecord(.session(c.ledger.activeSessionID!))
+ try expect(c.ledger.phase == .paused && c.ledger.activeSessionID==nil);try c.ledger.validate()
+}
+for removal in 0..<3 {
+ test("delete_entry_position_\(removal)_preserves_other_intervals_and_notes") {
+  let(t,_,c)=try fixture();try c.perform(.start);t.add(3*3600);try c.perform(.stop)
+  let session=c.ledger.sessions[0];let entries=c.ledger.entries
+  try c.editNotes(Dictionary(uniqueKeysWithValues:entries.enumerated().map{($0.element.id,"内容\($0.offset)")}))
+  try c.deleteRecord(.entry(entries[removal].id))
+  try expect(c.ledger.total(on:c.ledger.day)==7200 && c.ledger.entries.count==2)
+  let remaining=c.ledger.entries(for:session.id)
+  for (index,entry) in remaining.enumerated() {
+   try expect(entry.startOffset==Double(index)*3600 && entry.endOffset==Double(index+1)*3600)
+   try expect(entry.note=="内容\(entries.firstIndex{$0.id==entry.id}!)")
+  }
+  let intervals=c.ledger.sessions[0].intervals
+  let removedStart=session.startedAt.addingTimeInterval(Double(removal)*3600)
+  let removedEnd=removedStart.addingTimeInterval(3600)
+  try expect(intervals.allSatisfy{$0.end<=removedStart || $0.start>=removedEnd})
+  try expect(intervals.reduce(0){$0+$1.seconds}==7200 && c.ledger.phase == .stopped)
+  try c.ledger.validate()
+ }
+}
+test("delete_only_entry_removes_empty_session") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(300);try c.perform(.stop)
+ try c.deleteRecord(.entry(c.ledger.entries[0].id))
+ try expect(c.ledger.sessions.isEmpty && c.ledger.entries.isEmpty && c.ledger.phase == .stopped);try c.ledger.validate()
+}
+test("delete_only_active_entry_removes_empty_session_and_pauses") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(3600);c.tick()
+ try c.deleteRecord(.entry(c.ledger.entries[0].id))
+ try expect(c.ledger.sessions.isEmpty && c.ledger.phase == .paused && c.ledger.activeSessionID==nil)
+ try c.perform(.resume);t.add(3600);c.tick()
+ try expect(ReminderCoordinator.pending(in:c.ledger).map(\.hour)==[1]);try c.ledger.validate()
+}
+test("delete_entry_spanning_pause_preserves_real_endpoints") {
+ let(t,_,c)=try fixture();try c.perform(.start);let start=t.now
+ t.add(1500);try c.perform(.pause);t.add(600);try c.perform(.resume)
+ t.add(2100);c.tick();let entry=c.ledger.entries[0].id
+ t.add(300);try c.perform(.stop);try c.deleteRecord(.entry(entry))
+ let interval=c.ledger.sessions[0].intervals[0]
+ try expect(interval.start==start.addingTimeInterval(4200) && interval.end==start.addingTimeInterval(4500))
+ try expect(c.ledger.total(on:c.ledger.day)==300 && c.ledger.entries[0].startOffset==0)
+ try c.ledger.validate()
+}
+test("delete_active_entry_preserves_uncovered_tail_and_resume") {
+ let(t,_,c)=try fixture();try c.perform(.start);let start=t.now
+ t.add(3900);c.tick();let sessionID=c.ledger.activeSessionID!
+ try c.deleteRecord(.entry(c.ledger.entries[0].id))
+ try expect(c.ledger.phase == .paused && c.ledger.activeSessionID==sessionID && c.ledger.total(on:c.ledger.day)==300 && c.ledger.entries.isEmpty)
+ try expect(c.ledger.sessions[0].intervals[0].start==start.addingTimeInterval(3600))
+ t.add(900);try c.perform(.resume);t.add(3300);c.tick()
+ try expect(c.ledger.total(on:c.ledger.day)==3600 && c.ledger.entries[0].seconds==3600 && c.ledger.milestones[0].hour==1)
+ try c.perform(.quit);try c.ledger.validate()
+}
+test("delete_fractional_seconds_keeps_precision") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(0.25);try c.perform(.stop)
+ let old=c.ledger.sessions[0].id;try c.perform(.start);t.add(60.75);c.tick()
+ try c.deleteRecord(.session(old))
+ try expect(near(c.ledger.total(on:c.ledger.day),60.75) && c.ledger.phase == .paused);try c.ledger.validate()
+}
+test("delete_rearms_next_hour_without_immediate_or_duplicate_reminder") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(9300);c.tick()
+ try c.markPresented(Set(c.ledger.milestones.map(\.id)))
+ try c.deleteRecord(.entry(c.ledger.entries[0].id))
+ try expect(c.ledger.total(on:c.ledger.day)==5700 && c.ledger.milestones.map(\.hour)==[1] && ReminderCoordinator.pending(in:c.ledger).isEmpty)
+ try c.perform(.resume);t.add(1499);c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).isEmpty)
+ t.add(1);c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).map(\.hour)==[2])
+ try c.markPresented(Set(c.ledger.milestones.map(\.id)));c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).isEmpty)
+ t.add(3600);c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).map(\.hour)==[3]);try c.ledger.validate()
+}
+test("delete_whole_session_rearms_hour_across_sessions") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(3600);try c.perform(.stop)
+ let first=c.ledger.sessions[0].id
+ try c.perform(.start);t.add(300);c.tick();try c.deleteRecord(.session(first))
+ try expect(c.ledger.total(on:c.ledger.day)==300 && c.ledger.milestones.isEmpty)
+ try c.perform(.resume);t.add(3300);c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).map(\.hour)==[1]);try c.ledger.validate()
+}
+test("delete_tail_keeps_previous_note_and_no_resurrection_on_quit") {
+ let(t,s,c)=try fixture();try c.perform(.start);t.add(5400);try c.perform(.stop)
+ let previous=c.ledger.entries[0].id;try c.editNotes([previous:"保留"])
+ try c.deleteRecord(.entry(c.ledger.entries.last!.id));try c.perform(.quit)
+ let restored=try StudyController(source:t,store:s)
+ try expect(restored.ledger.entries.count==1 && restored.ledger.entries[0].note=="保留" && restored.ledger.total(on:c.ledger.day)==3600)
+ try restored.ledger.validate()
+}
+test("delete_middle_then_merge_pending_tail_preserves_coverage") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(9000);try c.perform(.stop)
+ try c.deleteRecord(.entry(c.ledger.entries[1].id))
+ let tail=c.ledger.entries.last!.id;try expect(c.ledger.canMerge(tail))
+ try c.resolveTail(tail,merge:true)
+ try expect(c.ledger.entries.count==1 && c.ledger.entries[0].seconds==5400 && c.ledger.total(on:c.ledger.day)==5400)
+ try c.ledger.validate()
+}
+test("delete_failure_rolls_back_pause_notes_and_duration") {
+ let(t,s,c)=try fixture();try c.perform(.start);t.add(3600);c.tick()
+ let entry=c.ledger.entries[0].id;let before=c.ledger;let disk=s.value;s.fail=true;t.add(5)
+ do {try c.deleteRecord(.entry(entry),notes:[entry:"未保存草稿"]);throw LedgerError.invalid("unexpected success")}
+ catch {try expect(error.localizedDescription.contains("injected"))}
+ try expect(c.ledger==before && s.value==disk && c.ledger.phase == .running)
+ s.fail=false;t.add(5);try c.deleteRecord(.entry(entry),notes:[entry:"草稿"])
+ try expect(c.ledger.phase == .paused && c.ledger.total(on:c.ledger.day)==10 && c.ledger.entries.isEmpty);try c.ledger.validate()
+}
+test("delete_missing_id_or_repeated_target_does_not_mutate") {
+ let(t,_,c)=try fixture();try c.perform(.start);t.add(10);c.tick();let before=c.ledger
+ do {try c.deleteRecord(.entry(UUID()));throw LedgerError.invalid("unexpected success")}
+ catch {try expect(error.localizedDescription.contains("重试"))}
+ try expect(c.ledger==before)
+ let target=RecordDeletion.session(c.ledger.activeSessionID!);try c.deleteRecord(target);let after=c.ledger
+ do {try c.deleteRecord(target);throw LedgerError.invalid("unexpected success")}
+ catch {try expect(error.localizedDescription.contains("重试"))}
+ try expect(c.ledger==after)
+}
+test("delete_zero_length_active_session") {
+ let(_,_,c)=try fixture();try c.perform(.start);try c.deleteRecord(.session(c.ledger.activeSessionID!))
+ try expect(c.ledger.phase == .paused && c.ledger.sessions.isEmpty);try c.ledger.validate()
+}
+test("delete_confirmation_after_midnight_uses_actual_day") {
+ let(t,_,c)=try fixture("2026-09-18T23:59:00+08:00");try c.perform(.start)
+ let target=RecordDeletion.session(c.ledger.activeSessionID!);t.add(120)
+ try c.deleteRecord(target)
+ try expect(c.ledger.day=="2026-09-19" && c.ledger.phase == .running && c.ledger.total(on:c.ledger.day)==60 && c.ledger.total(on:"2026-09-18")==0)
+ try c.ledger.validate()
+}
+test("SQLite_delete_existing_schema_restart_and_rearmed_reminder") {
+ let t=FakeClock();let dir=scratch.appendingPathComponent("delete-roundtrip")
+ do {let s=try SQLiteLedgerStore(directory:dir,now:t.now);let c=try StudyController(source:t,store:s)
+  try c.perform(.start);t.add(9300);c.tick();try c.deleteRecord(.entry(c.ledger.entries[0].id))
+  try expect(c.ledger.schemaVersion==2);try c.ledger.validate()
+ }
+ t.add(1000);let s=try SQLiteLedgerStore(directory:dir,now:t.now);let c=try StudyController(source:t,store:s)
+ try expect(c.ledger.phase == .stopped && c.ledger.total(on:c.ledger.day)==5700 && ReminderCoordinator.pending(in:c.ledger).isEmpty)
+ try c.perform(.start);t.add(1500);c.tick();try expect(ReminderCoordinator.pending(in:c.ledger).map(\.hour)==[2]);try c.ledger.validate()
+}
+test("repeated_delete_resume_and_pause_keeps_ledger_invariants") {
+ let(t,_,c)=try fixture();try c.perform(.start)
+ for index in 0..<30 {
+  if c.ledger.phase == .paused {try c.perform(.resume)}
+  if c.ledger.phase == .stopped {try c.perform(.start)}
+  t.add(Double(1000 + index*123));c.tick()
+  if index % 3 == 0 {try c.perform(.pause);t.add(73);try c.perform(.resume)}
+  if index % 4 == 0 {try c.perform(.stop)}
+  if let entry=c.ledger.entries.last {
+   let day=c.ledger.session(for:.entry(entry.id))!.day
+   let total=c.ledger.total(on:day)
+   try c.deleteRecord(.entry(entry.id))
+   try expect(near(c.ledger.total(on:day),total-entry.seconds))
+  }
+  try c.ledger.validate()
+ }
+ try c.perform(.quit);try c.ledger.validate()
+}
+
 let passed=checks.filter { $0["passed"] as? Bool == true }.count
 let report:[String:Any] = ["stage":"current", "kind":"isolated clocks and SQLite", "checks":checks, "allPassed":passed==checks.count,
  "notCovered":["Actual system sleep", "Actual overnight midnight", "UI window behavior"]]

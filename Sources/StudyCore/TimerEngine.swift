@@ -81,6 +81,64 @@ public struct TimerEngine {
             ledger.entries.remove(at:index)
         } else { ledger.entries[index].pendingTail=false }
     }
+    /// Called on the controller's advanced candidate, then saved as one transaction.
+    public mutating func deleteRecord(_ target: RecordDeletion) throws {
+        guard let session = ledger.session(for: target),
+              let sessionIndex = ledger.sessions.firstIndex(where: { $0.id == session.id }) else {
+            throw LedgerError.invalid("这条记录已删除或合并，请刷新后重试")
+        }
+        if session.day == ledger.day && ledger.phase == .running { ledger.phase = .paused }
+        switch target {
+        case .session:
+            removeSession(session.id)
+        case .entry(let id):
+            guard let entry = ledger.entries.first(where: { $0.id == id }) else {
+                throw LedgerError.invalid("这条记录不存在")
+            }
+            // Entry offsets measure effective time, so pauses must not be subtracted.
+            var offset: Double = 0
+            var retained: [StudyInterval] = []
+            for interval in session.intervals {
+                let end = offset + interval.seconds
+                let leftEnd = min(end, entry.startOffset)
+                if leftEnd > offset {
+                    retained.append(StudyInterval(start: interval.start,
+                        end: interval.start.addingTimeInterval(leftEnd - offset)))
+                }
+                let rightStart = max(offset, entry.endOffset)
+                if end > rightStart {
+                    retained.append(StudyInterval(start: interval.start.addingTimeInterval(rightStart - offset),
+                        end: interval.end))
+                }
+                offset = end
+            }
+            ledger.sessions[sessionIndex].intervals = retained
+            ledger.entries.removeAll { $0.id == id }
+            for index in ledger.entries.indices where ledger.entries[index].sessionID == session.id {
+                if ledger.entries[index].startOffset >= entry.endOffset {
+                    ledger.entries[index].startOffset -= entry.seconds
+                    ledger.entries[index].endOffset -= entry.seconds
+                }
+            }
+            if retained.isEmpty { removeSession(session.id) }
+        }
+        // Forget thresholds above the new total so crossing them again can notify.
+        // Lower thresholds are history, not reminders caused by a deletion.
+        let total = ledger.total(on: session.day)
+        ledger.milestones.removeAll { $0.day == session.day && Double($0.hour) * 3600 > total }
+        let entryIDs = Set(ledger.entries.map(\.id))
+        for index in ledger.milestones.indices where ledger.milestones[index].day == session.day {
+            ledger.milestones[index].presented = true
+            if let id = ledger.milestones[index].entryID, !entryIDs.contains(id) {
+                ledger.milestones[index].entryID = nil
+            }
+        }
+    }
+    private mutating func removeSession(_ id: UUID) {
+        ledger.entries.removeAll { $0.sessionID == id }
+        ledger.sessions.removeAll { $0.id == id }
+        if ledger.activeSessionID == id { ledger.activeSessionID = nil }
+    }
     public mutating func markPresented(_ ids:Set<String>) {
         for i in ledger.milestones.indices where ids.contains(ledger.milestones[i].id) { ledger.milestones[i].presented=true }
     }

@@ -122,6 +122,31 @@ final class StudyModel: ObservableObject {
         do { try controller.resolveTail(entry.id,merge:merge);drafts[entry.id]=nil;refresh();return true }
         catch { errorText=error.localizedDescription;return false }
     }
+    @discardableResult func deleteRecord(_ target: RecordDeletion) -> Bool {
+        guard let controller = controller, let session = ledger.session(for: target) else {
+            errorText = "这条记录已删除或合并，请刷新后重试"; return false
+        }
+        // Commit drafts with the deletion; never leave a delayed write to a deleted entry.
+        draftWork?.cancel()
+        let notes = Dictionary(uniqueKeysWithValues: dirty.compactMap { id in drafts[id].map { (id, $0) } })
+        let affectedCards = Set(ledger.entries.filter { entry in
+            ledger.sessions.contains { $0.id == entry.sessionID && $0.day == session.day }
+        }.map(\.id))
+        let oldCurrent = currentEntry?.id
+        do {
+            try controller.deleteRecord(target, notes: notes)
+            dirty.removeAll(); drafts.removeAll(); draftError = nil; refresh()
+            cardEntryIDs.removeAll { affectedCards.contains($0) }
+            cardIndex = oldCurrent.flatMap { cardEntryIDs.firstIndex(of: $0) } ?? 0
+            if session.day == ledger.day {
+                celebrationGeneration = UUID(); celebration = false
+            }
+            return true
+        } catch {
+            // Keep drafts and the running state available for a retry.
+            refresh(); errorText = error.localizedDescription; return false
+        }
+    }
     var hasUnsavedNotes: Bool { !dirty.isEmpty }
 
 }
