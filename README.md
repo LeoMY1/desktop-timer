@@ -4,6 +4,10 @@
 
 原生 Swift + SwiftUI + AppKit，系统 SQLite 存储；无需账号或网络。当前内部应用版本为 1.1.0，验证环境为 Apple Silicon Mac。
 
+**[下载 Mac 应用 v1.1.0](https://github.com/LeoMY1/desktop-timer/releases/tag/v1.1.0)** · [直接下载 ZIP](https://github.com/LeoMY1/desktop-timer/releases/download/v1.1.0/desktop-timer-1.1.0-arm64.zip)
+
+适用于 Apple Silicon（M 系列芯片），最低部署目标 macOS 13；无需开发工具。下载后解压，将 `StudyTimer.app` 拖入“应用程序”再打开。当前为未公证的原型版，首次打开可能需要系统确认，详见[首次打开说明](docs/user-guide.md#首次打开下载的应用)。
+
 ![悬浮计时窗](docs/images/light-timer.png)
 
 ## 功能
@@ -29,7 +33,7 @@ bash scripts/build.sh release
 open outputs/StudyTimer.app
 ```
 
-启动不自动计时。升级前先通过菜单退出旧版；当前继续使用原有 P4 数据目录，避免丢失已有记录。首次开源只提供代码及 Git 阶段历史，不提供 Release 下载。
+启动不自动计时。升级前先通过菜单退出旧版；当前继续使用原有 P4 数据目录，避免丢失已有记录。可直接下载上方 Release 应用，也可按这里的步骤自行构建。
 
 [使用说明与备份](docs/user-guide.md) · [需求](docs/requirements.md) · [技术规格](docs/spec.md)
 
