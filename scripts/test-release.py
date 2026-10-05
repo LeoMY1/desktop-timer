@@ -11,7 +11,7 @@ for flag in ['--acceptance-mode', '--ui-check']:
     run = subprocess.run([str(binary), flag], env=dict(os.environ, STUDY_TIMER_DATA_DIR=str(data)), capture_output=True)
     checks.append({'name': flag + ' rejected before opening data', 'passed': run.returncode == 2 and not (data / 'study.sqlite3').exists()})
 symbols = subprocess.check_output(['nm', str(binary)]).decode()
-checks.append({'name': 'No simulation/check entrypoints', 'passed': all(s not in symbols for s in ['UICheckClock','advanceAcceptance','runUICheck'])})
+checks.append({'name': 'No simulation/check entrypoints', 'passed': all(s not in symbols for s in ['UICheckClock','advanceAcceptance','runUICheck','runTrendUICheck'])})
 info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
 checks.append({'name': 'Stable data identity', 'passed': info['CFBundleIdentifier'] == 'local.study-timer.p4'})
 run = subprocess.run(['codesign', '--verify', '--strict', str(app)], capture_output=True)

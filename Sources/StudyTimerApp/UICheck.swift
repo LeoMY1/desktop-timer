@@ -154,6 +154,7 @@ extension AppDelegate {
             let store=try SQLiteLedgerStore(directory:output.appendingPathComponent("snapshot-check"),now:clock.now)
             try store.save(snapshot);let loaded=try store.load()
             check("SQLite_full_record_roundtrip",loaded==snapshot)
+            try runTrendUICheck(output: output, check: check)
             // Return to the main run loop so scheduled animation callbacks can execute.
             // A nested run loop inside this main-queue callback cannot service main-queue blocks.
             let effect = StudyModel()

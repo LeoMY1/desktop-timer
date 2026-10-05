@@ -1,0 +1,315 @@
+{
+  "allPassed" : true,
+  "checks" : [
+    {
+      "name" : "initial_stopped",
+      "passed" : true
+    },
+    {
+      "name" : "all_exit_menus_have_no_shortcut",
+      "passed" : true
+    },
+    {
+      "name" : "timer_cannot_become_key",
+      "passed" : true
+    },
+    {
+      "name" : "nonactivating_panels",
+      "passed" : true
+    },
+    {
+      "name" : "all_spaces_fullscreen_flags",
+      "passed" : true
+    },
+    {
+      "name" : "floating_no_hide_on_deactivate",
+      "passed" : true
+    },
+    {
+      "name" : "stopped_four_edges_drag",
+      "passed" : true
+    },
+    {
+      "name" : "stopped_digits_blank_drag",
+      "passed" : true
+    },
+    {
+      "name" : "stopped_buttons_not_drag",
+      "passed" : true
+    },
+    {
+      "name" : "stopped_two_full_icon_targets",
+      "passed" : true
+    },
+    {
+      "name" : "hourly_card_visible_above",
+      "passed" : true
+    },
+    {
+      "name" : "hourly_panel_not_key",
+      "passed" : true
+    },
+    {
+      "name" : "front_app_unchanged",
+      "passed" : true
+    },
+    {
+      "name" : "top_edge_shift",
+      "passed" : true
+    },
+    {
+      "name" : "running_during_card",
+      "passed" : true
+    },
+    {
+      "name" : "running_four_edges_drag",
+      "passed" : true
+    },
+    {
+      "name" : "running_digits_blank_drag",
+      "passed" : true
+    },
+    {
+      "name" : "running_buttons_not_drag",
+      "passed" : true
+    },
+    {
+      "name" : "running_two_full_icon_targets",
+      "passed" : true
+    },
+    {
+      "name" : "paused_four_edges_drag",
+      "passed" : true
+    },
+    {
+      "name" : "paused_digits_blank_drag",
+      "passed" : true
+    },
+    {
+      "name" : "paused_buttons_not_drag",
+      "passed" : true
+    },
+    {
+      "name" : "paused_two_full_icon_targets",
+      "passed" : true
+    },
+    {
+      "name" : "draft_flush",
+      "passed" : true
+    },
+    {
+      "name" : "new_hour_keeps_active_card",
+      "passed" : true
+    },
+    {
+      "name" : "new_hour_queued",
+      "passed" : true
+    },
+    {
+      "name" : "close_restores_top_position",
+      "passed" : true
+    },
+    {
+      "name" : "next_reminder_after_close",
+      "passed" : true
+    },
+    {
+      "name" : "stop_tail_visible",
+      "passed" : true
+    },
+    {
+      "name" : "tail_can_merge",
+      "passed" : true
+    },
+    {
+      "name" : "merge_preserves_total",
+      "passed" : true
+    },
+    {
+      "name" : "merge_preserves_both_texts",
+      "passed" : true
+    },
+    {
+      "name" : "merged_note_display_matches_saved",
+      "passed" : true
+    },
+    {
+      "name" : "short_session_no_previous_merge",
+      "passed" : true
+    },
+    {
+      "name" : "separate_resolves_tail",
+      "passed" : true
+    },
+    {
+      "name" : "hidden_reminders_retained",
+      "passed" : true
+    },
+    {
+      "name" : "missed_hours_one_batch",
+      "passed" : true
+    },
+    {
+      "name" : "batch_navigation",
+      "passed" : true
+    },
+    {
+      "name" : "already_presented_not_repeated",
+      "passed" : true
+    },
+    {
+      "name" : "quit_flush_and_settle",
+      "passed" : true
+    },
+    {
+      "name" : "SQLite_full_record_roundtrip",
+      "passed" : true
+    },
+    {
+      "name" : "history_initial_daily_today",
+      "passed" : true
+    },
+    {
+      "name" : "trend_first_visit_current_week",
+      "passed" : true
+    },
+    {
+      "name" : "trend_historical_period_selects_last_day",
+      "passed" : true
+    },
+    {
+      "name" : "history_preserves_daily_selection",
+      "passed" : true
+    },
+    {
+      "name" : "trend_preserves_its_selection",
+      "passed" : true
+    },
+    {
+      "name" : "trend_switch_month_anchors_selected_day",
+      "passed" : true
+    },
+    {
+      "name" : "trend_renders_minimum_window",
+      "passed" : true
+    },
+    {
+      "name" : "trend_native_click_selects_date_and_focus",
+      "passed" : true
+    },
+    {
+      "name" : "trend_native_arrow_left",
+      "passed" : true
+    },
+    {
+      "name" : "trend_native_arrow_right",
+      "passed" : true
+    },
+    {
+      "name" : "trend_zero_day_selection_stays_in_trend",
+      "passed" : true
+    },
+    {
+      "name" : "trend_open_record_selects_empty_day",
+      "passed" : true
+    },
+    {
+      "name" : "trend_return_from_records_keeps_period",
+      "passed" : true
+    },
+    {
+      "name" : "trend_future_day_rejected",
+      "passed" : true
+    },
+    {
+      "name" : "trend_browsing_preserves_ledger_and_disk",
+      "passed" : true
+    },
+    {
+      "name" : "trend_return_current_selects_today",
+      "passed" : true
+    },
+    {
+      "name" : "trend_live_model_refresh_matches_daily_total",
+      "passed" : true
+    },
+    {
+      "name" : "trend_pause_freezes_total",
+      "passed" : true
+    },
+    {
+      "name" : "trend_delete_history_succeeds",
+      "passed" : true
+    },
+    {
+      "name" : "trend_delete_updates_total_preserves_selection",
+      "passed" : true
+    },
+    {
+      "name" : "celebration_three_dim_bright_cycles",
+      "passed" : true
+    },
+    {
+      "name" : "celebration_held_before_30_seconds",
+      "passed" : true
+    },
+    {
+      "name" : "celebration_ends_at_30_seconds",
+      "passed" : true
+    },
+    {
+      "name" : "delete_confirmation_visible_without_pausing",
+      "passed" : true
+    },
+    {
+      "name" : "delete_cancel_keeps_records_and_running",
+      "passed" : true
+    },
+    {
+      "name" : "delete_confirmation_pauses_and_deducts",
+      "passed" : true
+    },
+    {
+      "name" : "delete_updates_display_and_menu",
+      "passed" : true
+    },
+    {
+      "name" : "delete_preserves_other_draft_and_clears_deleted_draft",
+      "passed" : true
+    },
+    {
+      "name" : "delete_closes_stale_card_and_restores_position",
+      "passed" : true
+    },
+    {
+      "name" : "delete_creates_no_new_pending_tail",
+      "passed" : true
+    },
+    {
+      "name" : "delete_continue_resumes",
+      "passed" : true
+    },
+    {
+      "name" : "delete_active_whole_session_succeeds",
+      "passed" : true
+    },
+    {
+      "name" : "delete_active_whole_keeps_paused",
+      "passed" : true
+    },
+    {
+      "name" : "delete_whole_continue_creates_new_session",
+      "passed" : true
+    },
+    {
+      "name" : "delete_historical_session_succeeds",
+      "passed" : true
+    },
+    {
+      "name" : "delete_historical_preserves_running_card_and_draft",
+      "passed" : true
+    }
+  ],
+  "kind" : "AppKit integration with isolated clock and SQLite; effect observed over 30 real seconds",
+  "stage" : "current"
+}

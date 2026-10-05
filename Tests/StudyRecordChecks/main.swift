@@ -537,6 +537,132 @@ test("repeated_delete_resume_and_pause_keeps_ledger_invariants") {
  try c.perform(.quit);try c.ledger.validate()
 }
 
+test("trend_natural_week_monday_sunday_and_year_boundary") {
+    let sunday = StudyPeriod(containing: StudyDate.date(for: "2026-10-04")!, kind: .week)
+    try expect(sunday.days.map(StudyDate.day) == ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"])
+    let monday = StudyPeriod(containing: StudyDate.date(for: "2026-10-05")!, kind: .week)
+    try expect(monday.start == sunday.end && !sunday.contains(monday.start))
+    let newYear = StudyPeriod(containing: StudyDate.date(for: "2027-01-01")!, kind: .week)
+    try expect(StudyDate.day(newYear.start) == "2026-12-28" && StudyDate.day(newYear.lastDay) == "2027-01-03")
+}
+test("trend_natural_month_leap_year_and_variable_lengths") {
+    for (key, count, next) in [("2024-02-29", 29, "2024-03-01"), ("2026-02-28", 28, "2026-03-01"), ("2026-04-12", 30, "2026-05-01"), ("2026-12-31", 31, "2027-01-01")] {
+        let period = StudyPeriod(containing: StudyDate.date(for: key)!, kind: .month)
+        try expect(period.days.count == count && StudyDate.day(period.start).hasSuffix("-01") && StudyDate.day(period.end) == next)
+    }
+}
+test("trend_dates_reject_invalid_and_noncanonical_keys") {
+    try expect(StudyDate.date(for: "2026-02-29") == nil && StudyDate.date(for: "2026-2-03") == nil && StudyDate.date(for: "2026-13-01") == nil)
+    try expect(StudyDate.day(StudyDate.date(for: "2024-02-29")!) == "2024-02-29")
+}
+test("trend_week_and_month_use_shanghai_not_utc") {
+    let monday = ISO8601DateFormatter().date(from: "2026-10-04T16:30:00Z")!
+    let october = ISO8601DateFormatter().date(from: "2026-09-30T16:10:00Z")!
+    try expect(StudyDate.day(StudyPeriod(containing: monday, kind: .week).start) == "2026-10-05")
+    try expect(StudyDate.day(StudyPeriod(containing: october, kind: .month).start) == "2026-10-01")
+}
+test("trend_empty_ledger_zero_past_and_nil_future") {
+    let (_, _, c) = try fixture("2026-10-07T09:00:00+08:00")
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    for kind in StudyPeriodKind.allCases {
+        let periods = snapshot.periods(of: kind)
+        try expect(periods.count == 1 && snapshot.total(in: periods[0]) == 0)
+    }
+    let week = snapshot.days(in: snapshot.periods(of: .week)[0])
+    try expect(week.count == 7 && week.prefix(3).allSatisfy { $0.seconds == 0 } && week.suffix(4).allSatisfy { $0.seconds == nil })
+    let month = snapshot.days(in: snapshot.periods(of: .month)[0])
+    try expect(month.count == 31 && month.filter { $0.seconds != nil }.count == 7)
+}
+test("trend_sums_sessions_excludes_pause_and_never_writes") {
+    let (t, store, c) = try fixture("2026-10-05T09:00:00+08:00")
+    try c.perform(.start); t.add(1500); try c.perform(.pause)
+    t.add(600); try c.perform(.resume); t.add(600); try c.perform(.stop)
+    try c.perform(.start); t.add(300); c.tick()
+    let saves = store.saves, before = c.ledger
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    let week = StudyPeriod(containing: t.now, kind: .week)
+    try expect(snapshot.total(in: week) == 2400 && snapshot.totalsByDay[c.ledger.day] == 2400)
+    _ = snapshot.periods(of: .month); _ = snapshot.days(in: week)
+    try expect(store.saves == saves && c.ledger == before && c.ledger.phase == .running)
+}
+test("trend_accumulates_seconds_before_formatting_across_month") {
+    let (t, _, c) = try fixture("2026-09-30T23:59:30+08:00")
+    try c.perform(.start); t.add(30.25); try c.perform(.stop)
+    try c.perform(.start); t.add(29.75); try c.perform(.stop)
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    let week = StudyPeriod(containing: t.now, kind: .week)
+    try expect(near(snapshot.totalsByDay["2026-09-30"]!, 30) && near(snapshot.totalsByDay["2026-10-01"]!, 30))
+    try expect(near(snapshot.total(in: week), 60) && StudyDate.duration(snapshot.total(in: week)) == "1分钟")
+    try expect(snapshot.total(in: StudyPeriod(containing: StudyDate.date(for: "2026-09-30")!, kind: .month)) == 30)
+}
+test("trend_live_seconds_include_uncheckpointed_time") {
+    let (t, store, c) = try fixture("2026-10-05T09:00:00+08:00")
+    try c.perform(.start); t.add(3.25); c.tick()
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    try expect(near(snapshot.totalsByDay[c.ledger.day]!, 3.25) && store.value.total(on: c.ledger.day) == 0)
+}
+test("trend_merge_and_note_edits_do_not_duplicate_time") {
+    let (t, _, c) = try fixture(); try c.perform(.start); t.add(5400); try c.perform(.stop)
+    let before = StudyTrendSnapshot(ledger: c.ledger)
+    try c.resolveTail(c.ledger.entries.last!.id, merge: true)
+    try c.editNotes([c.ledger.entries[0].id: "备注修改"])
+    try expect(StudyTrendSnapshot(ledger: c.ledger).totalsByDay == before.totalsByDay && before.totalsByDay[c.ledger.day] == 5400)
+}
+test("trend_period_catalog_fills_missing_months_and_weeks") {
+    let (t, _, c) = try fixture("2026-01-01T09:00:00+08:00")
+    try c.perform(.start); t.add(60); try c.perform(.stop)
+    t.now = ISO8601DateFormatter().date(from: "2026-03-15T09:00:00+08:00")!; c.tick()
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    let months = snapshot.periods(of: .month)
+    try expect(months.map { StudyDate.day($0.start) } == ["2026-03-01", "2026-02-01", "2026-01-01"])
+    try expect(months.map { snapshot.total(in: $0) } == [0, 0, 60])
+    let weeks = snapshot.periods(of: .week)
+    try expect(weeks.count == 11 && StudyDate.day(weeks.last!.start) == "2025-12-29")
+    try expect(weeks.dropLast().allSatisfy { snapshot.total(in: $0) == 0 })
+}
+test("trend_deletion_updates_history_and_today_totals") {
+    let (t, _, c) = try fixture("2026-10-04T09:00:00+08:00")
+    try c.perform(.start); t.add(5400); try c.perform(.stop)
+    let old = c.ledger.sessions[0].id
+    t.now = ISO8601DateFormatter().date(from: "2026-10-05T09:00:00+08:00")!
+    try c.perform(.start); t.add(120); c.tick()
+    try c.deleteRecord(.session(old))
+    let month = StudyPeriod(containing: t.now, kind: .month)
+    try expect(StudyTrendSnapshot(ledger: c.ledger).total(in: month) == 120 && c.ledger.phase == .running)
+    try c.deleteRecord(.session(c.ledger.activeSessionID!))
+    try expect(StudyTrendSnapshot(ledger: c.ledger).total(in: month) == 0 && c.ledger.phase == .paused)
+}
+test("trend_deleted_selected_period_retained_but_future_not_added") {
+    let (t, _, c) = try fixture("2026-09-18T09:00:00+08:00")
+    try c.perform(.start); t.add(60); try c.perform(.stop)
+    let old = c.ledger.sessions[0].id, selected = StudyPeriod(containing: t.now, kind: .month)
+    t.now = ISO8601DateFormatter().date(from: "2026-10-05T09:00:00+08:00")!; c.tick()
+    try c.deleteRecord(.session(old))
+    let snapshot = StudyTrendSnapshot(ledger: c.ledger)
+    try expect(snapshot.periods(of: .month).count == 1)
+    try expect(snapshot.periods(of: .month, including: selected).map { StudyDate.day($0.start) } == ["2026-10-01", "2026-09-01"])
+    try expect(snapshot.total(in: selected) == 0)
+    let future = StudyPeriod(containing: StudyDate.date(for: "2026-11-01")!, kind: .month)
+    try expect(snapshot.periods(of: .month, including: future).count == 1)
+}
+test("trend_failed_delete_preserves_snapshot") {
+    let (t, store, c) = try fixture(); try c.perform(.start); t.add(3600); c.tick()
+    let period = StudyPeriod(containing: t.now, kind: .week)
+    let before = StudyTrendSnapshot(ledger: c.ledger).days(in: period)
+    store.fail = true
+    do { try c.deleteRecord(.entry(c.ledger.entries[0].id)); throw LedgerError.invalid("unexpected success") }
+    catch { try expect(error.localizedDescription.contains("injected")) }
+    try expect(StudyTrendSnapshot(ledger: c.ledger).days(in: period) == before)
+}
+test("trend_recovery_does_not_add_closed_process_time") {
+    let (t, store, c) = try fixture("2026-10-04T23:58:00+08:00")
+    try c.perform(.start); t.add(70); c.tick(); t.add(3600)
+    let restored = try StudyController(source: t, store: store)
+    let snapshot = StudyTrendSnapshot(ledger: restored.ledger)
+    try expect(snapshot.totalsByDay["2026-10-04"] == 70 && snapshot.totalsByDay["2026-10-05", default: 0] == 0)
+    try expect(snapshot.total(in: StudyPeriod(containing: t.now, kind: .month)) == 70)
+}
+
 let passed=checks.filter { $0["passed"] as? Bool == true }.count
 let report:[String:Any] = ["stage":"current", "kind":"isolated clocks and SQLite", "checks":checks, "allPassed":passed==checks.count,
  "notCovered":["Actual system sleep", "Actual overnight midnight", "UI window behavior"]]

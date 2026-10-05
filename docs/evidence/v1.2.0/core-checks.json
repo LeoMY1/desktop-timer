@@ -1,0 +1,368 @@
+{
+  "allPassed" : true,
+  "checks" : [
+    {
+      "name" : "launch_is_stopped_and_empty",
+      "passed" : true
+    },
+    {
+      "name" : "25_plus_35_minutes_same_session_pause_excluded",
+      "passed" : true
+    },
+    {
+      "name" : "90_plus_30_minutes_independent_sessions",
+      "passed" : true
+    },
+    {
+      "name" : "midnight_2340_to_0020",
+      "passed" : true
+    },
+    {
+      "name" : "exact_midnight_new_day_zero_running",
+      "passed" : true
+    },
+    {
+      "name" : "paused_midnight_stays_paused_resume_new_session",
+      "passed" : true
+    },
+    {
+      "name" : "stopped_midnight_does_not_start",
+      "passed" : true
+    },
+    {
+      "name" : "missed_callbacks_catch_up_two_hour_sleep_simulation",
+      "passed" : true
+    },
+    {
+      "name" : "multi_day_sleep_simulation",
+      "passed" : true
+    },
+    {
+      "name" : "normal_quit_no_closed_interval_accrual",
+      "passed" : true
+    },
+    {
+      "name" : "abnormal_recovery_saved_snapshot_only",
+      "passed" : true
+    },
+    {
+      "name" : "checkpoint_five_second_cadence",
+      "passed" : true
+    },
+    {
+      "name" : "critical_actions_save_immediately",
+      "passed" : true
+    },
+    {
+      "name" : "failed_pause_keeps_running_and_retry_retains_time",
+      "passed" : true
+    },
+    {
+      "name" : "failed_checkpoint_keeps_memory_and_last_good_snapshot",
+      "passed" : true
+    },
+    {
+      "name" : "failed_quit_does_not_stop_live_engine",
+      "passed" : true
+    },
+    {
+      "name" : "fractional_seconds_not_rounded_per_tick",
+      "passed" : true
+    },
+    {
+      "name" : "beijing_day_independent_of_host_timezone",
+      "passed" : true
+    },
+    {
+      "name" : "display_HH_MM_and_chinese_duration",
+      "passed" : true
+    },
+    {
+      "name" : "sqlite_roundtrip_and_reopen",
+      "passed" : true
+    },
+    {
+      "name" : "second_writer_rejected",
+      "passed" : true
+    },
+    {
+      "name" : "corrupt_file_preserved",
+      "passed" : true
+    },
+    {
+      "name" : "unknown_sqlite_version_preserved",
+      "passed" : true
+    },
+    {
+      "name" : "invalid_payload_preserved",
+      "passed" : true
+    },
+    {
+      "name" : "invalid_ledger_cannot_replace_good_snapshot",
+      "passed" : true
+    },
+    {
+      "name" : "relative_data_override_rejected",
+      "passed" : true
+    },
+    {
+      "name" : "daily_hour_across_25_and_35_sessions",
+      "passed" : true
+    },
+    {
+      "name" : "hourly_records_survive_multiple_missed_hours",
+      "passed" : true
+    },
+    {
+      "name" : "milestone_immediate_checkpoint_and_no_duplicate",
+      "passed" : true
+    },
+    {
+      "name" : "presentation_dedup_after_reopen",
+      "passed" : true
+    },
+    {
+      "name" : "unshown_reminders_remain_after_recovery",
+      "passed" : true
+    },
+    {
+      "name" : "note_edit_clear_and_restart",
+      "passed" : true
+    },
+    {
+      "name" : "editing_does_not_pause_timer",
+      "passed" : true
+    },
+    {
+      "name" : "new_hour_does_not_overwrite_prior_note",
+      "passed" : true
+    },
+    {
+      "name" : "90_tail_merge_plus_30_no_double_count",
+      "passed" : true
+    },
+    {
+      "name" : "tail_separate_preserves_duration",
+      "passed" : true
+    },
+    {
+      "name" : "tail_without_previous_rejects_cross_session_merge",
+      "passed" : true
+    },
+    {
+      "name" : "pending_tail_saved_before_choice",
+      "passed" : true
+    },
+    {
+      "name" : "automatic_midnight_tail_merges_within_day_only",
+      "passed" : true
+    },
+    {
+      "name" : "automatic_quit_tail_merges_and_keeps_note",
+      "passed" : true
+    },
+    {
+      "name" : "automatic_short_tail_creates_record",
+      "passed" : true
+    },
+    {
+      "name" : "failed_note_and_merge_preserve_saved_data",
+      "passed" : true
+    },
+    {
+      "name" : "failed_presentation_does_not_consume_reminder",
+      "passed" : true
+    },
+    {
+      "name" : "SQLite_notes_tails_and_milestones_roundtrip",
+      "passed" : true
+    },
+    {
+      "name" : "quit_resolves_unselected_manual_tails",
+      "passed" : true
+    },
+    {
+      "name" : "quit_unselected_short_tail_saved_separately",
+      "passed" : true
+    },
+    {
+      "name" : "real_clock_session_uses_actual_start_time",
+      "passed" : true
+    },
+    {
+      "name" : "preview_starts_at_current_time_not_nine",
+      "passed" : true
+    },
+    {
+      "name" : "preview_restore_does_not_rewind_or_count_closed_time",
+      "passed" : true
+    },
+    {
+      "name" : "midnight_preserves_earlier_total_notes_and_start_time",
+      "passed" : true
+    },
+    {
+      "name" : "midnight_paused_preserves_all_prior_totals",
+      "passed" : true
+    },
+    {
+      "name" : "delete_closed_session_updates_total_and_preserves_other_session",
+      "passed" : true
+    },
+    {
+      "name" : "delete_yesterday_session_keeps_today_running_and_reminders",
+      "passed" : true
+    },
+    {
+      "name" : "delete_yesterday_entry_keeps_active_timer_and_today_card_eligible",
+      "passed" : true
+    },
+    {
+      "name" : "delete_today_closed_session_pauses_active_without_creating_tail",
+      "passed" : true
+    },
+    {
+      "name" : "delete_active_session_paused_without_session_resume_creates_new",
+      "passed" : true
+    },
+    {
+      "name" : "delete_already_paused_active_session_stays_paused",
+      "passed" : true
+    },
+    {
+      "name" : "delete_entry_position_0_preserves_other_intervals_and_notes",
+      "passed" : true
+    },
+    {
+      "name" : "delete_entry_position_1_preserves_other_intervals_and_notes",
+      "passed" : true
+    },
+    {
+      "name" : "delete_entry_position_2_preserves_other_intervals_and_notes",
+      "passed" : true
+    },
+    {
+      "name" : "delete_only_entry_removes_empty_session",
+      "passed" : true
+    },
+    {
+      "name" : "delete_only_active_entry_removes_empty_session_and_pauses",
+      "passed" : true
+    },
+    {
+      "name" : "delete_entry_spanning_pause_preserves_real_endpoints",
+      "passed" : true
+    },
+    {
+      "name" : "delete_active_entry_preserves_uncovered_tail_and_resume",
+      "passed" : true
+    },
+    {
+      "name" : "delete_fractional_seconds_keeps_precision",
+      "passed" : true
+    },
+    {
+      "name" : "delete_rearms_next_hour_without_immediate_or_duplicate_reminder",
+      "passed" : true
+    },
+    {
+      "name" : "delete_whole_session_rearms_hour_across_sessions",
+      "passed" : true
+    },
+    {
+      "name" : "delete_tail_keeps_previous_note_and_no_resurrection_on_quit",
+      "passed" : true
+    },
+    {
+      "name" : "delete_middle_then_merge_pending_tail_preserves_coverage",
+      "passed" : true
+    },
+    {
+      "name" : "delete_failure_rolls_back_pause_notes_and_duration",
+      "passed" : true
+    },
+    {
+      "name" : "delete_missing_id_or_repeated_target_does_not_mutate",
+      "passed" : true
+    },
+    {
+      "name" : "delete_zero_length_active_session",
+      "passed" : true
+    },
+    {
+      "name" : "delete_confirmation_after_midnight_uses_actual_day",
+      "passed" : true
+    },
+    {
+      "name" : "SQLite_delete_existing_schema_restart_and_rearmed_reminder",
+      "passed" : true
+    },
+    {
+      "name" : "repeated_delete_resume_and_pause_keeps_ledger_invariants",
+      "passed" : true
+    },
+    {
+      "name" : "trend_natural_week_monday_sunday_and_year_boundary",
+      "passed" : true
+    },
+    {
+      "name" : "trend_natural_month_leap_year_and_variable_lengths",
+      "passed" : true
+    },
+    {
+      "name" : "trend_dates_reject_invalid_and_noncanonical_keys",
+      "passed" : true
+    },
+    {
+      "name" : "trend_week_and_month_use_shanghai_not_utc",
+      "passed" : true
+    },
+    {
+      "name" : "trend_empty_ledger_zero_past_and_nil_future",
+      "passed" : true
+    },
+    {
+      "name" : "trend_sums_sessions_excludes_pause_and_never_writes",
+      "passed" : true
+    },
+    {
+      "name" : "trend_accumulates_seconds_before_formatting_across_month",
+      "passed" : true
+    },
+    {
+      "name" : "trend_live_seconds_include_uncheckpointed_time",
+      "passed" : true
+    },
+    {
+      "name" : "trend_merge_and_note_edits_do_not_duplicate_time",
+      "passed" : true
+    },
+    {
+      "name" : "trend_period_catalog_fills_missing_months_and_weeks",
+      "passed" : true
+    },
+    {
+      "name" : "trend_deletion_updates_history_and_today_totals",
+      "passed" : true
+    },
+    {
+      "name" : "trend_deleted_selected_period_retained_but_future_not_added",
+      "passed" : true
+    },
+    {
+      "name" : "trend_failed_delete_preserves_snapshot",
+      "passed" : true
+    },
+    {
+      "name" : "trend_recovery_does_not_add_closed_process_time",
+      "passed" : true
+    }
+  ],
+  "kind" : "isolated clocks and SQLite",
+  "notCovered" : [
+    "Actual system sleep",
+    "Actual overnight midnight",
+    "UI window behavior"
+  ],
+  "stage" : "current"
+}

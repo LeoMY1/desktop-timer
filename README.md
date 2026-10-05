@@ -2,9 +2,9 @@
 
 一个本地运行的 macOS 悬浮学习计时器原型，同时保存从视觉设计、需求讨论到验收交付的 Agent 开发案例。适合希望每天记录学习时间、并为学习片段补充备注的人。
 
-原生 Swift + SwiftUI + AppKit，系统 SQLite 存储；无需账号或网络。当前内部应用版本为 1.1.0，验证环境为 Apple Silicon Mac。
+原生 Swift + SwiftUI + AppKit，系统 SQLite 存储；无需账号或网络。当前版本为 1.2.0，新增自然周、自然月学习趋势，验证环境为 Apple Silicon Mac。
 
-**[下载 Mac 应用 v1.1.0](https://github.com/LeoMY1/desktop-timer/releases/tag/v1.1.0)** · [直接下载 ZIP](https://github.com/LeoMY1/desktop-timer/releases/download/v1.1.0/desktop-timer-1.1.0-arm64.zip)
+**[下载 Mac 应用 v1.2.0](https://github.com/LeoMY1/desktop-timer/releases/tag/v1.2.0)** · [直接下载 ZIP](https://github.com/LeoMY1/desktop-timer/releases/download/v1.2.0/desktop-timer-1.2.0-arm64.zip)
 
 适用于 Apple Silicon（M 系列芯片），最低部署目标 macOS 13；无需开发工具。下载后解压，将 `StudyTimer.app` 拖入“应用程序”再打开。当前为未公证的原型版，首次打开可能需要系统确认，详见[首次打开说明](docs/user-guide.md#首次打开下载的应用)。
 
@@ -17,11 +17,12 @@
 - 备注自动保存，支持稍后补填、历史修改与清空；提醒排队，不覆盖正在输入的草稿。
 - 停止后的尾段可以单独保存或合并到同段上一条；合并不重复计算时间。
 - 历史页可删除整个学习段或单条内容记录，并扣减累计。删除当天记录会暂停运行中的计时，删除其他日期不影响当前学习。
+- 学习记录窗口可切换“每日记录”和“学习趋势”；按自然周、自然月查看每天的有效学习时长，选择历史周期或从图中进入当天记录。
 - 本地保存、菜单栏恢复窗口、鼠标菜单退出。退出没有快捷键。
 
-![历史记录，采用隔离测试内容](docs/images/light-history.png)
+![学习趋势，采用隔离测试内容](docs/images/light-trend-week.png)
 
-截图是应用原生视图，内容来自隔离测试数据，不是用户学习记录。[深色界面](docs/images/dark-history.png) · [设计参考](design/current/01-overall-light.png)
+截图是应用原生视图，内容来自隔离测试数据，不是用户学习记录。[月趋势](docs/images/light-trend-month.png) · [深色月趋势](docs/images/dark-trend-month.png) · [设计参考](design/current/01-overall-light.png)
 
 ## 构建与使用
 需要 Apple Silicon Mac、Xcode Command Line Tools（含 Swift 和 macOS SDK）以及 Python 3。部署目标 macOS 13，当前使用 Swift 5.8.1 工具链验证，无第三方依赖。项目以命令行脚本构建；不依赖本地 Xcode 工程或预先生成的缓存。
@@ -74,7 +75,7 @@ design/current/         当前设计参考
 - 本地 ad-hoc 签名，未做 Developer ID 公证或跨机器发行验证。
 - 自然跨午夜仍未实测；自动化跨日采用可控时钟。锁屏/睡眠曾由用户报告通过，本轮未重做物理睡眠。
 - 全屏、Spaces、输入法候选框及多显示器的完整体验仍需按环境验收。
-- 不包含 Windows、云同步、番茄钟、趋势图、导出、开机自启或手动修改时长。
+- 不包含 Windows、云同步、番茄钟、导出、开机自启或手动修改时长。
 
 ## License
 [MIT](LICENSE) · Copyright © 2026 LeoMY1。生成的设计参考随本项目保留；系统组件与工具链按其自身许可使用。

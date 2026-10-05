@@ -3,125 +3,119 @@ import StudyCore
 
 struct HistoryView: View {
     @ObservedObject var model: StudyModel
-    var showTail: (UUID)->Void
-    var deleteRecord: (RecordDeletion)->Void
-    @State private var editingID: UUID?
-    @State private var selectedDay: String?
-    var day: String { selectedDay ?? model.ledger.day }
-    var days: [String] { Array(Set(model.ledger.sessions.map(\.day) + [model.ledger.day])).sorted(by: >) }
-    var sessions: [StudySession] { model.ledger.sessions.filter { $0.day == day } }
+    @ObservedObject var navigation: HistoryNavigation
+    var showTail: (UUID) -> Void
+    var deleteRecord: (RecordDeletion) -> Void
+
+    private var day: String { navigation.dailyDate(today: model.ledger.day) }
+    private var days: [String] {
+        Array(Set(model.ledger.sessions.map(\.day) + [model.ledger.day, day])).sorted(by: >)
+    }
+
     var body: some View {
+        let snapshot = StudyTrendSnapshot(ledger: model.ledger)
+        let anchor = StudyDate.date(for: navigation.trendDate(today: model.ledger.day)) ?? snapshot.today
+        let period = StudyPeriod(containing: anchor, kind: navigation.periodKind)
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("每日记录").font(.system(size: 12, weight: .medium)).foregroundColor(.secondary).padding(12)
+            sidebar(snapshot: snapshot, selection: period)
+            Divider()
+            if !model.ready {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("暂时无法读取学习记录").font(.system(size: 20, weight: .semibold))
+                    Text(model.errorText ?? "请从菜单查看错误并重试。")
+                        .font(.system(size: 13)).foregroundColor(.secondary).textSelection(.enabled)
+                    Text("请从计时窗菜单重试加载。").font(.system(size: 12)).foregroundColor(.secondary)
+                    Spacer()
+                }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            } else if navigation.section == .daily {
+                DailyRecordsView(model: model, showTail: showTail, deleteRecord: deleteRecord, day: day)
+            } else {
+                StudyTrendView(snapshot: snapshot, navigation: navigation, errorText: model.errorText)
+            }
+        }
+        .background(PrototypeTheme.surface)
+        .frame(minWidth: 760, minHeight: 560)
+    }
+
+    private func sidebar(snapshot: StudyTrendSnapshot, selection: StudyPeriod) -> some View {
+        let periods = snapshot.periods(of: navigation.periodKind, including: selection)
+        let selectedID = navigation.section == .daily ? day : selection.id
+        return VStack(alignment: .leading, spacing: 16) {
+            Picker("记录视图", selection: Binding(
+                get: { navigation.section },
+                set: { navigation.selectSection($0, today: model.ledger.day) }
+            )) {
+                ForEach(HistorySection.allCases) { section in Text(section.title).tag(section) }
+            }
+            .pickerStyle(.segmented).controlSize(.small).labelsHidden()
+            .accessibilityIdentifier("history-section-picker")
+            .disabled(model.isEditingHistory)
+
+            ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 5) {
-                        ForEach(days, id: \.self) { date in
-                            Button { selectedDay = date } label: {
-                                HStack {
-                                    Text(String(date.suffix(5)).replacingOccurrences(of: "-", with: "/"))
-                                    Spacer()
-                                    Text(StudyDate.duration(model.ledger.total(on: date))).font(.system(size: 11)).foregroundColor(.secondary)
+                    LazyVStack(alignment: .leading, spacing: 5) {
+                        if !model.ready {
+                            Text("无法读取记录").font(.system(size: 12)).foregroundColor(.secondary).padding(10)
+                        } else if navigation.section == .daily {
+                            ForEach(days, id: \.self) { date in
+                                Button { navigation.selectRecord(date) } label: {
+                                    HStack(spacing: 5) {
+                                        Text(shortDate(date))
+                                        Spacer(minLength: 0)
+                                        Text(StudyDate.duration(snapshot.totalsByDay[date, default: 0]))
+                                            .font(.system(size: 11)).foregroundColor(.secondary)
+                                    }
+                                    .font(.system(size: 13)).padding(.vertical, 12).padding(.horizontal, 10)
+                                    .background(date == day ? PrototypeTheme.accent.opacity(0.13) : Color.clear)
+                                    .cornerRadius(9).contentShape(Rectangle())
                                 }
-                                .font(.system(size: 13)).padding(12)
-                                .background(date == day ? PrototypeTheme.accent.opacity(0.13) : Color.clear).cornerRadius(9)
-                                .contentShape(Rectangle())
-                            }.buttonStyle(.plain)
+                                .buttonStyle(.plain).id(date)
+                                .accessibilityLabel(date + "，" + StudyDate.duration(snapshot.totalsByDay[date, default: 0]))
+                                .accessibilityIdentifier("history-day-" + date)
+                            }
+                        } else {
+                            ForEach(Array(periods.enumerated()), id: \.element.id) { index, period in
+                                if index == 0 || periods[index - 1].year != period.year {
+                                    Text("\(String(period.year))年").font(.system(size: 11)).foregroundColor(.secondary)
+                                        .padding(.horizontal, 10).padding(.top, index == 0 ? 0 : 10)
+                                }
+                                periodButton(period, snapshot: snapshot, selected: period.id == selection.id)
+                            }
                         }
                     }
                 }
-                Text("学习记录保存在本机").font(.system(size: 10)).foregroundColor(.secondary).padding(12)
-            }.padding(12).frame(width: 190).background(Color.primary.opacity(0.025))
-            Divider()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    HStack {
-                        Text(day.replacingOccurrences(of: "-", with: "/")).font(.system(size: 24, weight: .semibold))
-                        Spacer()
-                        if day == model.ledger.day { Text(model.phaseTitle).font(.system(size: 12)).foregroundColor(PrototypeTheme.accent) }
-                    }
-                    VStack(alignment: .leading, spacing: 7) {
-                        Text(day == model.ledger.day ? "今日累计" : "当日累计").font(.system(size: 12)).foregroundColor(.secondary)
-                        Text(StudyDate.duration(model.ledger.total(on: day)))
-                            .font(.system(size: 38, weight: .bold, design: .rounded)).foregroundColor(PrototypeTheme.primaryInk)
-                    }
-                    if let error = model.errorText {
-                        Text("记录尚未成功保存：" + error).foregroundColor(.red).font(.system(size: 12)).textSelection(.enabled)
-                    }
-                    Divider()
-                    if sessions.isEmpty { Text(model.ready ? "这一天还没有学习记录" : "暂时无法读取学习记录，请从菜单查看错误并重试。")
-                        .font(.system(size: 14)).foregroundColor(.secondary).padding(.vertical, 28) }
-                    ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text("学习段 \(index + 1)").font(.system(size: 16, weight: .semibold))
-                                Spacer()
-                                Text(StudyDate.duration(session.seconds)).font(.system(size: 13, weight: .medium)).foregroundColor(PrototypeTheme.accent)
-                                deleteButton(.session(session.id), label: "删除学习段")
-                            }
-                            HStack(spacing: 14) {
-                                Text(StudyDate.clock(session.startedAt) + "–" + (session.endedAt.map { StudyDate.clock($0) } ?? "至今"))
-                                Text(status(session))
-                            }.font(.system(size: 12)).foregroundColor(.secondary)
-                            Text("有效学习 \(StudyDate.duration(session.seconds)) · 暂停时间不计入")
-                                .font(.system(size: 12)).foregroundColor(.secondary)
-                            ForEach(model.ledger.entries(for:session.id)) { entry in
-                                HStack(alignment:.top,spacing:8) {
-                                    VStack(alignment:.leading,spacing:5) {
-                                        Text(model.note(entry.id).isEmpty ? "未填写学习内容" : model.note(entry.id))
-                                            .font(.system(size:13)).foregroundColor(model.note(entry.id).isEmpty ? .secondary : .primary)
-                                            .fixedSize(horizontal:false,vertical:true)
-                                        if entry.pendingTail { Text("尾段待处理").font(.system(size:10)).foregroundColor(.orange) }
-                                    }
-                                    Spacer()
-                                    Text(StudyDate.duration(entry.seconds)).font(.system(size:12)).foregroundColor(.secondary)
-                                    Button { model.isEditingHistory=true;editingID=entry.id } label: {
-                                        Image(systemName:"pencil").frame(width:20,height:20).contentShape(Rectangle())
-                                    }.buttonStyle(.plain).accessibilityLabel("编辑学习内容")
-                                    deleteButton(.entry(entry.id), label: "删除内容记录")
-                                    if entry.pendingTail {
-                                        Button("处理"){showTail(entry.id)}.font(.system(size:11)).buttonStyle(.plain).foregroundColor(PrototypeTheme.accent)
-                                    }
-                                }.padding(10).background(PrototypeTheme.surface).cornerRadius(8)
-                            }
-                            let recorded=model.ledger.entries(for:session.id).last?.endOffset ?? 0
-                            if session.endedAt==nil && session.seconds-recorded>0.001 {
-                                HStack { Text("当前学习内容待整小时或停止后记录");Spacer();Text(StudyDate.duration(session.seconds-recorded)) }
-                                    .font(.system(size:11)).foregroundColor(.secondary)
-                            }
-                        }.padding(16).background(Color.primary.opacity(0.025)).cornerRadius(10)
-                    }
+                .onAppear { proxy.scrollTo(selectedID, anchor: .center) }
+                .onChange(of: selectedID) { value in proxy.scrollTo(value, anchor: .center) }
+            }
+            Text("学习记录保存在本机").font(.system(size: 10)).foregroundColor(.secondary).padding(.horizontal, 10)
+        }
+        .padding(12).padding(.top, 6).frame(width: 190)
+        .background(Color.primary.opacity(0.025))
+    }
 
-                }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
+    private func periodButton(_ period: StudyPeriod, snapshot: StudyTrendSnapshot, selected: Bool) -> some View {
+        let total = snapshot.total(in: period)
+        return Button { navigation.selectPeriod(period, today: snapshot.today) } label: {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 4) {
+                    Text(period.sidebarTitle).font(.system(size: 12))
+                    Spacer(minLength: 0)
+                    if period.contains(snapshot.today) {
+                        Text("本" + period.kind.title).font(.system(size: 10)).foregroundColor(PrototypeTheme.accent)
+                    }
+                }
+                Text(StudyDate.duration(total)).font(.system(size: 11)).foregroundColor(.secondary)
             }
-        }.background(PrototypeTheme.surface).frame(minWidth:760,minHeight:560)
-        .sheet(isPresented:Binding(get:{editingID != nil},set:{if !$0 {finishEditing()}})) {
-            if let id=editingID {
-                VStack(alignment:.leading,spacing:12) {
-                    Text("编辑学习内容").font(.system(size:18,weight:.semibold))
-                    Text("备注自动保存，可修改或清空；学习时长不变。").font(.system(size:12)).foregroundColor(.secondary)
-                    ClickToEditField(text:Binding(get:{model.note(id)},set:{model.setNote(id,$0)}),onEscape:finishEditing)
-                        .frame(height:150).overlay(RoundedRectangle(cornerRadius:8).stroke(PrototypeTheme.border))
-                    if let error=model.errorText {Text("保存失败："+error).font(.system(size:11)).foregroundColor(.red)}
-                    HStack { Spacer();Button("完成",action:finishEditing).keyboardShortcut(.defaultAction) }
-                }.padding(24).frame(width:420).interactiveDismissDisabled()
-            }
+            .padding(.horizontal, 10).padding(.vertical, 11).frame(maxWidth: .infinity, alignment: .leading)
+            .background(selected ? PrototypeTheme.accent.opacity(0.13) : Color.clear)
+            .cornerRadius(9).contentShape(Rectangle())
         }
+        .buttonStyle(.plain).id(period.id)
+        .accessibilityLabel(period.rangeTitle + "，累计" + StudyDate.duration(total))
+        .accessibilityIdentifier("history-period-" + period.id)
     }
-    func deleteButton(_ target: RecordDeletion, label: String) -> some View {
-        Button { deleteRecord(target) } label: {
-            Image(systemName: "trash").frame(width: 24, height: 24).contentShape(Rectangle())
-        }.buttonStyle(.plain).foregroundColor(.secondary).help(label).accessibilityLabel(label)
-            .disabled(!model.ready || model.isEditingHistory)
-    }
-    func finishEditing() { if model.flushDrafts() {editingID=nil;model.isEditingHistory=false} }
-    func status(_ session: StudySession) -> String {
-        if session.endedAt == nil { return model.phase == .paused ? "已暂停" : "学习中" }
-        switch session.endReason {
-        case .midnight: return "跨日分段"
-        case .quit: return "退出时结束"
-        case .interrupted: return "已恢复至最后保存点"
-        default: return "已结束"
-        }
+
+    private func shortDate(_ date: String) -> String {
+        String(date.suffix(5)).replacingOccurrences(of: "-", with: "/")
     }
 }

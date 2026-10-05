@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var programmaticMove = false
     var tailQueue: [UUID] = []
     var historyWindow: NSWindow?
+    let historyNavigation = HistoryNavigation()
     var statusItem: NSStatusItem!
     var menu = NSMenu()
     var refreshTimer: Timer?
@@ -190,7 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.title="学习记录"; window.identifier=NSUserInterfaceItemIdentifier("study-history")
             window.minSize=NSSize(width:760,height:590); window.isReleasedWhenClosed=false
             window.titlebarAppearsTransparent=true
-            window.contentView=NSHostingView(rootView:HistoryView(model:model,showTail:{[weak self] id in self?.showTail(id)},deleteRecord:{[weak self] target in self?.requestDeletion(target)})); window.center(); historyWindow=window
+            window.contentView=NSHostingView(rootView:HistoryView(model:model,navigation:historyNavigation,showTail:{[weak self] id in self?.showTail(id)},deleteRecord:{[weak self] target in self?.requestDeletion(target)})); window.center(); historyWindow=window
         }
         historyWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
     }
